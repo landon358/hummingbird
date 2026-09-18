@@ -567,7 +567,7 @@ function logoScale() {
   const unitsPerPx = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / innerHeight;
   return ui('birdSlot').offsetWidth * 1.3 * unitsPerPx;
 }
-let enterYaw = 0, faceSide = 1, idleS = 1, revT = 0, dir = 1, off = 0, offFrom = 0, offTo = 0, turnT = 1, turnDur = 1, turnPulse = 0, last = performance.now(), time = 0, phase = 0, bank = 0, yawS = 0, turnS = 0, headSnap = 0, headYaw = 0, headPitch = 0;
+let enterYaw = 0, idleS = 1, revT = 0, dir = 1, off = 0, offFrom = 0, offTo = 0, turnT = 1, turnDur = 1, turnPulse = 0, last = performance.now(), time = 0, phase = 0, bank = 0, yawS = 0, turnS = 0, headSnap = 0, headYaw = 0, headPitch = 0;
 const _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2(), _plane = new THREE.Plane(), _n = new THREE.Vector3();
 const _hp = new THREE.Vector3(), _tgt = new THREE.Vector3(), _nq = new THREE.Quaternion();
 const _perch = new THREE.Vector3(), _box = new THREE.Box3();
@@ -694,11 +694,9 @@ function loop(now, manual) {
   idleS += (idle - idleS) * Math.min(1, dt * (idle > idleS ? 1.6 : 4));
   if (mode !== 'flight') idleS = idle;
 
-  // idle hovers: turn to face the viewer, angled in toward the page, never showing its back
-  if (mode === 'flight' && idleS > 0) {
-    if (Math.abs(dispPos.x) > .25) faceSide = dispPos.x > 0 ? -1 : 1;
-    yawGoal += wrapA(-Math.PI / 2 + faceSide * .62 - yawGoal) * idleS;
-  }
+  // resting keeps the heading it flew in on, so stopping and starting never swings the bird around;
+  // on the perch it sits in profile, looking back toward the page
+  if (mode === 'flight' && perchK > 0) yawGoal += wrapA((perchX > 0 ? Math.PI : 0) - yawGoal) * perchK;
 
   // turn at a capped rate so sudden heading changes become a swing, not a snap
   const yawErr = wrapA(yawGoal - yawS), yawRate = mode === 'launch' || mode === 'enter' ? 14 : 4.5;
@@ -841,6 +839,7 @@ if (new URLSearchParams(location.search).has('debug')) window.__bird = {
   get scale() { return flightScale; },
   setBand(page) { bandPage = page; },
   rig, fold: FOLD,
+  get pose() { return { yaw: yawS, bank, idle: idleS, off, dir, turnT }; },
   get perch() { return { on: perched, k: +perchK.toFixed(3), page: Math.round(perchPage), base: Math.round(perchBase), anchor: perchAnchor, x: +perchX.toFixed(2) }; },
   get band() { const u = asciiMat.uniforms; return { center: +u.uBandC.value.toFixed(3), half: +u.uBandH.value.toFixed(3), page: Math.round(bandPage) }; },
   // poses the bird exactly as the header logo draws it, at a chosen wing phase and moment
