@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Services | Hummingbird</title>
+<meta name="description" content="A custom website, a chatbot that answers your visitors, and online booking with automatic reminders.">
+<script>
+  document.documentElement.classList.add('js');   // entrances only hide content when scripts can reveal it
+  // hide the page until the bird flies in, only when arriving through the site's own links
+  try { var nav = performance.getEntriesByType('navigation')[0]; if (sessionStorage.getItem('hb_transit') === '1' && (!nav || nav.type === 'navigate')) document.documentElement.classList.add('transit'); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/hummingbird/assets/site.css">
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<header class="nav">
+  <a class="brand" href="/hummingbird/" aria-label="Hummingbird home"><span id="birdSlot"><span class="imprint" aria-hidden="true"></span></span><span class="word">hummingbird</span></a>
+  <div class="island"><nav class="island-core">
+    <span class="island-glider" aria-hidden="true"></span><a href="/hummingbird/" data-page="index">Home</a><a href="/hummingbird/services/" data-page="services" class="on" aria-current="page">Services</a><a href="/hummingbird/work/" data-page="work">Work</a><a href="/hummingbird/process/" data-page="process">How it works</a><a href="/hummingbird/pricing/" data-page="pricing">Pricing</a><a href="/hummingbird/contact/" data-page="contact">Contact</a>
+  </nav></div>
+  <a class="btn btn--sm" href="/hummingbird/contact/">Get a free demo</a>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+</header>
+
+<div class="menu" id="menu">
+  <a href="/hummingbird/" style="--i:0"><span>Home</span></a>
+  <a href="/hummingbird/services/" style="--i:1"><span>Services</span></a>
+  <a href="/hummingbird/work/" style="--i:2"><span>Work</span></a>
+  <a href="/hummingbird/process/" style="--i:3"><span>How it works</span></a>
+  <a href="/hummingbird/pricing/" style="--i:4"><span>Pricing</span></a>
+  <a href="/hummingbird/contact/" style="--i:5"><span>Contact</span></a>
+  <small><span class="blank">[ email ]</span></small>
+</div>
+
+<main id="content">
+  <section class="chapter hero" data-side="left">
+    <div class="col">
+      <h1 class="rv" style="--d:1">Everything your site <em>needs.</em></h1>
+      <p class="lede rv" style="--d:2">Every plan includes a custom website, a chatbot for your visitors, and online booking with reminders. One team builds and maintains all of it.</p>
+      <div class="actions rv" style="--d:3">
+        <a class="btn" href="/hummingbird/contact/">Get a free demo</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" data-side="right">
+    <div class="col">
+      <h2 class="h-quiet rv" style="--d:1">Designed around <em>your</em> business.</h2>
+      <p class="lede rv" style="--d:2">We design each site from scratch around your services and customers, then keep it running.</p>
+      <ul class="points points--lead rv" style="--d:3">
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Designed from scratch for your business</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Fast on phones</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Hosting and updates every month</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Domain setup, or we buy one for you</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="chapter" data-side="left">
+    <div class="col">
+      <h2 class="h-quiet rv" style="--d:1">Answers at <em>any</em> hour.</h2>
+      <p class="lede lede--large rv" style="--d:2">People browse at night and on weekends. The chatbot answers common questions right away and collects details when you need to follow up.</p>
+      <ul class="points points--inline rv" style="--d:3">
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Set up with your services and hours</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Collects contact details</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Sends conversations to you</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="chapter" data-side="right">
+    <div class="col">
+      <h2 class="h-quiet rv" style="--d:1">Fewer <em>missed</em> appointments.</h2>
+      <p class="lede rv" style="--d:2">Customers pick a time on your calendar without calling, and reminders go out automatically before the appointment.</p>
+      <ol class="flow rv" style="--d:3">
+        <li>Customers book on your site</li>
+        <li>Reminders go out by text and email</li>
+        <li>They reschedule instead of not showing up</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="chapter chapter--stage" data-side="left">
+    <div class="col">
+      <h2 class="rv" style="--d:1">All of it, <em>one</em> plan.</h2>
+      <p class="lede rv" style="--d:2">$199 a month covers everything on this page. No contract, and your demo is free.</p>
+      <div class="actions rv" style="--d:3">
+        <a class="btn" href="/hummingbird/contact/">Get a free demo</a>
+        <a class="btn btn--ghost" href="/hummingbird/pricing/">See pricing</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot">
+    <div class="foot-brand-block">
+      <a class="foot-brand" href="/hummingbird/"><span class="foot-mark" aria-hidden="true"></span><b>hummingbird</b></a>
+      <p class="foot-line">Custom websites with a chatbot and online booking, built and looked after by our own US team.</p>
+      <a class="btn btn--ghost btn--sm foot-cta" href="/hummingbird/contact/">Get a free demo</a>
+    </div>
+
+    <div class="foot-col">
+      <h4>Site</h4>
+      <ul>
+        <li><a href="/hummingbird/">Home</a></li>
+        <li><a href="/hummingbird/services/">Services</a></li>
+        <li><a href="/hummingbird/work/">Work</a></li>
+        <li><a href="/hummingbird/process/">How it works</a></li>
+        <li><a href="/hummingbird/pricing/">Pricing</a></li>
+      </ul>
+    </div>
+
+    <div class="foot-col">
+      <h4>Get started</h4>
+      <ul>
+        <li><a href="/hummingbird/contact/">Request a demo</a></li>
+        <li><a href="/hummingbird/booking/">Book a call</a></li>
+        <li><a href="/hummingbird/walkthrough/">Watch the walkthrough</a></li>
+      </ul>
+    </div>
+
+    <div class="foot-col">
+      <h4>Reach us</h4>
+      <ul>
+        <li><a href="#"><span class="blank">[ email ]</span></a></li>
+        <li><a href="#"><span class="blank">[ phone ]</span></a></li>
+        <li><a href="#"><span class="blank">[ social ]</span></a></li>
+        <li><a href="#"><span class="blank">[ social ]</span></a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot-base">
+    <span>© 2026 Hummingbird</span>
+    <span>Built in Michigan, working across the US</span>
+    <a class="sep" href="/hummingbird/terms/">Terms, privacy and credits</a>
+  </div>
+</footer>
+
+<!-- page UI: works even if WebGL or the CDN is unavailable -->
+<script>
+(() => {
+  setTimeout(() => {
+    document.documentElement.classList.remove('transit');   // never leave the page hidden
+    if (!window.hbNavigate) document.querySelector('.imprint')?.classList.add('on');   // no WebGL: the logo still shows
+  }, 2600);
+
+  // Buttons follow the fluid interface rules: feedback lands on pointer down, the press tracks the
+  // finger with rubber banding, and release hands the pointer velocity to a spring that can be
+  // interrupted at any moment. Springs animate from the value on screen, never from a target.
+  (() => {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    const buttons = [...document.querySelectorAll('.btn')];
+    if (!buttons.length) return;
+    document.documentElement.classList.add('liquid');
+
+    const springs = new Set();
+    let raf = 0, last = 0;
+    const tick = now => {
+      const dt = Math.min((now - last) / 1000, 1 / 30); last = now;
+      for (const sp of springs) sp.step(dt);
+      raf = springs.size ? requestAnimationFrame(tick) : 0;
+    };
+    const wake = sp => { springs.add(sp); if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick); } };
+
+    // damping 1 settles without overshoot; below 1 it overshoots, which we only use after a flick
+    function Spring(value, apply) {
+      const S = { x: value, v: 0, target: value, w: 2 * Math.PI / .4, z: 1 };
+      S.to = (target, { response = .4, damping = 1, velocity } = {}) => {
+        S.target = target; S.w = 2 * Math.PI / response; S.z = damping;
+        if (velocity !== undefined) S.v = velocity;
+        wake(S);
+      };
+      S.step = dt => {
+        for (let i = 0, n = Math.max(1, Math.ceil(dt / (1 / 240))), h = dt / n; i < n; i++) {
+          S.v += (-2 * S.z * S.w * S.v - S.w * S.w * (S.x - S.target)) * h;
+          S.x += S.v * h;
+        }
+        if (Math.abs(S.x - S.target) < .0005 && Math.abs(S.v) < .002) { S.x = S.target; S.v = 0; springs.delete(S); }
+        apply(S.x);
+      };
+      return S;
+    }
+
+    // past the edge the button follows less and less, the way real things slow before they stop
+    const rubberband = (over, dimension, c = .55) => (over * dimension * c) / (dimension + c * Math.abs(over));
+
+    buttons.forEach(btn => {
+      if (reduce.matches) return;   // reduced motion keeps the colour feedback, drops the movement
+      const sx = Spring(0, v => btn.style.setProperty('--tx', v.toFixed(2) + 'px'));
+      const sy = Spring(0, v => btn.style.setProperty('--ty', v.toFixed(2) + 'px'));
+      const ss = Spring(1, v => btn.style.setProperty('--sc', v.toFixed(4)));
+      let id = null, gx = 0, gy = 0, hist = [];
+
+      const press = e => {
+        if (e.button > 0) return;
+        id = e.pointerId; try { btn.setPointerCapture(id); } catch (err) {}
+        gx = e.clientX; gy = e.clientY; hist = [[e.clientX, e.clientY, performance.now()]];
+        btn.classList.add('is-press');
+        ss.to(.965, { response: .25, damping: 1 });          // instant, on the press itself
+      };
+      const move = e => {
+        if (e.pointerId !== id) return;
+        hist.push([e.clientX, e.clientY, performance.now()]);
+        if (hist.length > 6) hist.shift();
+        const r = btn.getBoundingClientRect();
+        sx.to(rubberband(e.clientX - gx, r.width * .5), { response: .22, damping: 1 });
+        sy.to(rubberband(e.clientY - gy, r.height * .8), { response: .22, damping: 1 });
+        // dragging off the control cancels it, dragging back re arms it
+        const inside = e.clientX > r.left - 12 && e.clientX < r.right + 12 && e.clientY > r.top - 12 && e.clientY < r.bottom + 12;
+        btn.classList.toggle('is-press', inside);
+      };
+      const release = e => {
+        if (e.pointerId !== id) return;
+        id = null; btn.classList.remove('is-press');
+        // velocity at the moment of release, handed to the spring so there is no seam
+        let vx = 0, vy = 0;
+        if (hist.length > 1) {
+          const [x0, y0, t0] = hist[0], [x1, y1, t1] = hist[hist.length - 1], dt = (t1 - t0) / 1000;
+          if (dt > 0) { vx = (x1 - x0) / dt; vy = (y1 - y0) / dt; }
+        }
+        const flick = Math.hypot(vx, vy) > 320;
+        const opt = { response: flick ? .38 : .3, damping: flick ? .8 : 1 };   // bounce only after momentum
+        sx.to(0, { ...opt, velocity: vx }); sy.to(0, { ...opt, velocity: vy }); ss.to(1, opt);
+      };
+
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointermove', move);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { btn.classList.add('is-press'); ss.to(.965, { response: .25 }); } });
+      btn.addEventListener('keyup', () => { btn.classList.remove('is-press'); ss.to(1, { response: .3 }); });
+      btn.addEventListener('blur', () => { btn.classList.remove('is-press'); ss.to(1, { response: .3 }); });
+      if (matchMedia('(hover:hover)').matches) {
+        btn.addEventListener('pointerenter', () => { if (!id) sy.to(-1.5, { response: .35 }); });
+        btn.addEventListener('pointerleave', () => { if (!id) { sy.to(0, { response: .35 }); ss.to(1, { response: .3 }); } });
+      }
+    });
+  })();
+
+  // nav highlight: a liquid pill that stretches across the bar when you change tabs
+  (() => {
+    const core = document.querySelector('.island-core');
+    const glider = core && core.querySelector('.island-glider');
+    if (!glider) return;
+    const links = [...core.querySelectorAll('a')];
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    let L = 0, R = 0, vL = 0, vR = 0, raf = 0, target = null;
+
+    const edges = a => [a.offsetLeft, a.offsetLeft + a.offsetWidth];
+    const draw = () => {
+      const w = core.clientWidth;
+      glider.style.clipPath = `inset(0 ${Math.max(0, w - R)}px 0 ${Math.max(0, L)}px round 999px)`;
+    };
+    const settle = a => { [L, R] = edges(a); vL = vR = 0; draw(); glider.classList.add('on'); };
+    const step = () => {
+      const [tl, tr] = edges(target);
+      // the leading edge runs ahead of the trailing one, so the pill stretches like liquid
+      const lead = tr > R || tl > L;
+      const kL = lead ? 170 : 320, kR = lead ? 320 : 170;
+      const dt = 1 / 60;
+      vL += ((tl - L) * kL - vL * 2 * Math.sqrt(kL)) * dt; L += vL * dt;
+      vR += ((tr - R) * kR - vR * 2 * Math.sqrt(kR)) * dt; R += vR * dt;
+      draw();
+      if (Math.abs(tl - L) + Math.abs(tr - R) > .4 || Math.abs(vL) + Math.abs(vR) > 2) raf = requestAnimationFrame(step);
+      else { L = tl; R = tr; draw(); raf = 0; }
+    };
+    const slideTo = a => {
+      target = a;
+      if (reduce.matches || !glider.classList.contains('on')) { settle(a); return; }
+      if (!raf) raf = requestAnimationFrame(step);
+    };
+    const current = links.find(a => a.classList.contains('on'));
+    if (current) settle(current);
+    links.forEach(a => a.addEventListener('click', () => slideTo(a)));
+    addEventListener('resize', () => { const a = target || current; if (a) settle(a); });
+  })();
+
+  // hovering the logo sends the shimmer across the imprint again
+  const imprint = document.querySelector('.imprint');
+  document.querySelector('.brand').addEventListener('mouseenter', () => {
+    if (!imprint.classList.contains('on')) return;
+    imprint.classList.remove('shimmer'); void imprint.offsetWidth; imprint.classList.add('shimmer');
+  });
+
+  // headlines: wrap each word so it can resolve in sequence; the heading keeps its full text for screen readers
+  const splitWords = el => {
+    el.setAttribute('aria-label', (el.innerText || el.textContent).replace(/\s+/g, ' ').trim());
+    let i = 0;
+    const walk = node => [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(part => {
+          if (!part) return;
+          if (!part.trim()) { frag.appendChild(document.createTextNode(part)); return; }
+          const mask = document.createElement('span');
+          mask.className = 'w'; mask.setAttribute('aria-hidden', 'true');
+          const w = document.createElement('span');
+          w.className = 'wi'; w.style.setProperty('--wi', Math.min(i++, 9));
+          // letters carry their own index so the word can start wide and close up
+          [...part].forEach((c, k) => {
+            const ch = document.createElement('span');
+            ch.className = 'ch'; ch.textContent = c; ch.style.setProperty('--i', k);
+            w.appendChild(ch);
+          });
+          mask.appendChild(w); frag.appendChild(mask);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1 && n.tagName !== 'BR') walk(n);
+    });
+    walk(el); el.classList.add('split');
+  };
+  document.querySelectorAll('h1.rv, h2.rv, blockquote.rv').forEach(splitWords);
+  // the accent gradient runs across the whole phrase instead of restarting on every word
+  const spanGradient = () => document.querySelectorAll('h1.split em').forEach(em => {
+    const box = em.getBoundingClientRect();
+    em.querySelectorAll('.wi').forEach(w => {
+      const r = w.getBoundingClientRect();
+      w.style.backgroundSize = Math.round(box.width) + 'px 100%';
+      w.style.backgroundPosition = Math.round(box.left - r.left) + 'px 0';
+    });
+  });
+  spanGradient();
+  document.fonts?.ready.then(spanGradient);
+  addEventListener('resize', spanGradient);
+
+  // scroll speed, sampled per frame while the page moves, with no scroll listener on the input path
+  let lastY = scrollY, speed = 0, ticking = 0;
+  const sample = () => {
+    speed += (Math.abs(scrollY - lastY) * 60 - speed) * .2; lastY = scrollY;
+    ticking = speed > 4 || scrollY !== lastY ? requestAnimationFrame(sample) : 0;
+  };
+  const wake = () => { if (!ticking) { lastY = scrollY; ticking = requestAnimationFrame(sample); } };
+  addEventListener('wheel', wake, { passive: true });
+  addEventListener('touchmove', wake, { passive: true });
+  addEventListener('keydown', wake);
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    // fast scrolling gets a tighter, quicker resolve; a slow read gets the full move
+    const t = Math.min(speed / 2600, 1);
+    const el = e.target;
+    el.style.setProperty('--rise', (0.66 - t * 0.34).toFixed(2) + 'em');
+    el.style.setProperty('--step', Math.round(50 - t * 26) + 'ms');
+    el.style.setProperty('--spread', (0.095 - t * 0.055).toFixed(3) + 'em');
+    el.classList.add('in');
+    io.unobserve(el);
+  }), { rootMargin: '0px 0px -10% 0px' });
+  // after a page change the page stays hidden until the bird flies in; start entrances only once it is visible
+  const startReveals = () => document.querySelectorAll('.rv').forEach(el => io.observe(el));
+  const root = document.documentElement;
+  if (root.classList.contains('transit')) {
+    const mo = new MutationObserver(() => { if (!root.classList.contains('transit')) { mo.disconnect(); startReveals(); } });
+    mo.observe(root, { attributes: true, attributeFilter: ['class'] });
+  } else startReveals();
+
+  // the scroll edge appears only when content actually passes under the floating nav
+  const sentinel = document.createElement('div');
+  sentinel.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:70px;pointer-events:none';
+  document.body.prepend(sentinel);
+  new IntersectionObserver(([e]) => document.documentElement.classList.toggle('scrolled', !e.isIntersecting)).observe(sentinel);
+
+  const burger = document.getElementById('burger');
+  const setMenu = open => { document.body.classList.toggle('menu-open', open); burger.setAttribute('aria-expanded', String(open)); };
+  burger.addEventListener('click', () => setMenu(!document.body.classList.contains('menu-open')));
+  addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+
+  // demo request form: not connected to a form service yet, so nothing is sent. It moves on to booking.
+  const form = document.getElementById('demoForm');
+  if (form) form.addEventListener('submit', e => {
+    e.preventDefault();
+    const next = form.dataset.next || '/hummingbird/booking/';
+    window.hbNavigate ? window.hbNavigate(next) : (location.href = next);
+  });
+})();
+</script>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module" src="/hummingbird/assets/bird.js"></script>
+</body>
+</html>
