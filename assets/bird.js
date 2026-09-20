@@ -366,7 +366,7 @@ function buildPath() {
   });
   // size the bird so it fits the narrowest open column with air around it
   const openPx = narrow ? vw * .5 : Math.max(vw * .3, Math.min(...chapters.map(c => c.b - c.a)));
-  const BIRD_SIZE = 1.67;   // overall size multiplier on top of the fit
+  const BIRD_SIZE = 1.67 * (document.body.classList.contains('quiet-bird') ? .68 : 1);   // task pages keep it small
   flightScale = THREE.MathUtils.clamp(openPx * .5 / (birdLen * pxPerUnit), .45, 1) * BIRD_SIZE;
   const birdPx = birdLen * flightScale * pxPerUnit;
 

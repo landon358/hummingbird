@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Request a Free Demo | Hummingbird</title>
-<meta name="description" content="Tell us about your business and we will build a working demo of your new website.">
+<title>See a Demo | Hummingbird</title>
+<meta name="description" content="Watch what your new site, chatbot and booking flow actually do, then book a 30 minute call.">
 <script>
   document.documentElement.classList.add('js');   // entrances only hide content when scripts can reveal it
   // hide the page until the bird flies in, only when arriving through the site's own links
@@ -20,7 +20,7 @@
 <meta name="theme-color" content="#09090b">
 <link rel="stylesheet" href="/hummingbird/assets/site.css">
 </head>
-<body>
+<body class="quiet-bird">
 <canvas id="gl" aria-hidden="true"></canvas>
 
 <header class="nav">
@@ -43,30 +43,14 @@
 </div>
 
 <main id="content">
-  <section class="chapter hero hero--form" data-side="left">
-    <div class="col">
-      <h1 class="rv" style="--d:1">Get a <em>free</em> demo.</h1>
-      <p class="lede rv" style="--d:2">Tell us about your business. We'll build a working demo and walk you through it on a short call.</p>
-      <!-- TODO: connect to the new form service. Right now nothing is sent; submitting moves on to /booking/. -->
-      <form class="bezel form rv" style="--d:3" id="demoForm" data-next="/hummingbird/booking/">
-        <div class="core">
-          <label class="field"><span>Name</span><input name="name" autocomplete="name" required></label>
-          <label class="field"><span>Business name</span><input name="business" autocomplete="organization" required></label>
-          <label class="field wide"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
-          <label class="field wide"><span>Current website, if you have one</span><input name="website" type="url" placeholder="https://"></label>
-          <label class="field wide"><span>What does your business do?</span><textarea name="about"></textarea></label>
-          <p class="form-note">We reply by email. No phone number needed, and we never pass your details on. See our <a class="inline" href="/hummingbird/privacy/">privacy policy</a>.</p>
-          <button class="btn" type="submit">Get a free demo</button>
-        </div>
-      </form>
-    </div>
-  </section>
+  <section class="chapter hero hero--task" data-side="left">
+    <div class="col col--wide">
+      <div class="task-head">
+        <h1 class="rv" style="--d:1">See what <em>yours</em> could look like.</h1>
+        <p class="task-price rv" style="--d:2"><span>Website and AI</span><strong>$199</strong><span class="mono">/ mo</span></p>
+      </div>
 
-  <section class="chapter" data-side="right">
-    <div class="col">
-      <h2 class="rv" style="--d:1">See it <em>working.</em></h2>
-      <p class="lede rv" style="--d:2">A short walk through of a real site, the chatbot answering, and a booking landing in the calendar.</p>
-      <div class="bezel embed rv" style="--d:3">
+      <div class="bezel embed vsl-wrap rv" style="--d:3">
         <div class="core vsl" data-vsl data-state="idle">
           <!-- drop the file in here: src is the video, poster is the still behind it -->
           <video class="vsl-video" src="" poster="" preload="auto" playsinline webkit-playsinline
@@ -94,18 +78,11 @@
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <section class="chapter" data-side="right">
-    <div class="col">
-      <h2 class="rv" style="--d:1">Rather <em>talk</em> first?</h2>
-      <p class="lede rv" style="--d:2">Reach our team in Michigan directly.</p>
-      <div class="reach rv" style="--d:3">
-        <div class="reach-lead"><span class="reach-label">Email</span><span class="blank">[ email ]</span></div>
-        <div><span class="reach-label">Phone</span><span class="blank">[ phone ]</span></div>
-        <div><span class="reach-label">Hours</span><span class="blank">[ hours ]</span></div>
-      </div>
+      <a class="btn btn--wide rv" style="--d:4" href="/hummingbird/booking/">Book a 30 minute call<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+
+      <p class="task-note rv" style="--d:5">No pressure and nothing to prepare. We will have looked at your current site before the call.
+        Rather write? <span class="blank">[ email ]</span>. Rather talk now? <span class="blank">[ phone ]</span>.</p>
     </div>
   </section>
 </main>
