@@ -251,11 +251,15 @@ footer{position:relative;z-index:1;margin-top:var(--s8);padding:var(--s8) clamp(
   transition-delay:calc(var(--wi) * var(--step,52ms) + 40ms)}
 .js .split.in .wi{opacity:1;transform:none}
 /* letters start spread, then close up, so the word resolves rather than slides */
-.js .split .wi > .ch{display:inline-block;transform:translate3d(calc(min(var(--i,0),6) * var(--spread,.085em)),0,0);
+.js .split .wi > .ch{display:inline-block;transform:translate3d(calc(var(--i,0) * var(--spread,.085em)),0,0);
   transition:transform 1180ms var(--spring-soft);transition-delay:calc(var(--wi) * var(--step,52ms) + 40ms)}
 .js .split.in .wi > .ch{transform:none}
 h1.split em{background:none}
-h1.split em .wi{background:var(--iri);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;padding-right:.06em;margin-right:-.06em}
+h1.split em .wi{padding-right:.06em;margin-right:-.06em}
+/* the gradient rides each letter rather than the word: a transformed word breaks a text clip
+   that spans inline blocks, which bunched the accent word while it animated in */
+h1.split em .ch{background:var(--iri);-webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent}
 
 /* list items follow their list in order */
 .js .rv:is(.points,.flow) > li,.js .plan.rv li{opacity:0;transform:translate3d(var(--lx,0px),8px,0);transition:opacity 520ms cubic-bezier(.2,.6,.3,1),transform 720ms var(--spring-firm)}
@@ -343,6 +347,62 @@ main,footer{transition:opacity .6s var(--ease)}
 .faq details[open] summary i{transform:rotate(45deg)}
 .faq details[open] summary:active i{transform:rotate(45deg) scale(.9)}
 .faq details p{padding:0 24px 22px;color:var(--dim);max-width:36em}
+
+/* video player: a muted preview loops until you ask for sound, the same shape the
+   old site used, rebuilt in our own surface and type */
+.vsl{position:relative;aspect-ratio:16/9;overflow:hidden;background:#06070a}
+.vsl-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#06070a}
+.vsl-empty{position:absolute;inset:0;display:none;align-items:center;justify-content:center}
+.vsl.is-empty .vsl-empty{display:flex}
+.vsl.is-empty .vsl-sound,.vsl.is-empty .vsl-bar{display:none}
+.vsl-sound{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+  border:0;margin:0;padding:0;background:color-mix(in srgb,var(--bg) 22%,transparent);cursor:pointer;font:inherit}
+.vsl-pill{display:inline-flex;align-items:center;gap:10px;padding:14px 24px;border-radius:999px;
+  background:var(--fg);color:var(--bg);font:500 clamp(15px,1.4vw,18px)/1 var(--sans);
+  box-shadow:0 18px 50px -18px rgba(0,0,0,.9);animation:vslPulse 2s var(--ease) infinite}
+@keyframes vslPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.vsl-ico-play,.vsl-txt-watch{display:none}
+.vsl[data-state=blocked] .vsl-ico-off,.vsl[data-state=blocked] .vsl-txt-sound{display:none}
+.vsl[data-state=blocked] .vsl-ico-play,.vsl[data-state=blocked] .vsl-txt-watch{display:inline}
+.vsl[data-state=playing] .vsl-sound,.vsl[data-state=paused] .vsl-sound,.vsl[data-state=ended] .vsl-sound{display:none}
+.vsl[data-state=playing] .vsl-video,.vsl[data-state=paused] .vsl-video{cursor:pointer}
+.vsl-paused{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;
+  color:var(--fg);background:color-mix(in srgb,var(--bg) 34%,transparent);pointer-events:none}
+.vsl[data-state=paused] .vsl-paused{display:flex}
+.vsl-end{position:absolute;inset:0;z-index:4;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:var(--s4);padding:var(--s5);text-align:center;background:color-mix(in srgb,var(--bg) 78%,transparent);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.vsl[data-state=ended] .vsl-end{display:flex}
+.vsl-end-title{font:500 clamp(22px,2.6vw,34px)/1.1 var(--display);letter-spacing:-.03em}
+.vsl-replay{border:0;background:none;color:var(--faint);font:400 14px var(--sans);cursor:pointer;padding:6px;
+  transition:color var(--t-hover) var(--out)}
+.vsl-replay:hover{color:var(--fg)}
+.vsl-bar{position:absolute;left:0;right:0;bottom:0;z-index:3;display:none;align-items:center;gap:var(--s3);
+  padding:var(--s5) var(--s4) var(--s3);background:linear-gradient(transparent,color-mix(in srgb,var(--bg) 78%,transparent))}
+.vsl[data-state=playing] .vsl-bar,.vsl[data-state=paused] .vsl-bar{display:flex}
+.vsl-bar button{border:0;background:none;color:var(--fg);cursor:pointer;padding:4px;display:flex;
+  transition:opacity var(--t-hover) var(--out)}
+.vsl-bar button:hover{opacity:.75}
+.vsl-track{flex:1;height:3px;border-radius:3px;background:color-mix(in srgb,var(--fg) 22%,transparent);overflow:hidden}
+.vsl-fill{height:100%;width:0;background:var(--fg)}
+.vsl-toggle .i-play{display:none}
+.vsl[data-state=paused] .vsl-toggle .i-play{display:block}
+.vsl[data-state=paused] .vsl-toggle .i-pause{display:none}
+.vsl[data-muted] .vsl-wave{display:none}
+.vsl-full .i-collapse{display:none}
+.vsl[data-full] .vsl-full .i-expand{display:none}
+.vsl[data-full] .vsl-full .i-collapse{display:block}
+/* fullscreen lifts the wrapper, not the video, so our controls come with it.
+   the two selectors stay apart: one a browser cannot parse would drop both */
+.vsl:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;background:#000}
+.vsl:fullscreen .vsl-video{object-fit:contain}
+.vsl:-webkit-full-screen{width:100vw;height:100vh;aspect-ratio:auto;background:#000}
+.vsl:-webkit-full-screen .vsl-video{object-fit:contain}
+@media (prefers-reduced-motion:reduce){.vsl-pill{animation:none}}
+
+/* booking calendar: the widget reports its own height, the shell script applies it */
+.cal{min-height:780px}
+.cal iframe{display:block}
 
 /* embeds waiting on real content */
 .slot{display:grid;place-items:center;gap:12px;text-align:center;min-height:420px;padding:32px}

@@ -64,6 +64,41 @@
 
   <section class="chapter" data-side="right">
     <div class="col">
+      <h2 class="rv" style="--d:1">See it <em>working.</em></h2>
+      <p class="lede rv" style="--d:2">A short walk through of a real site, the chatbot answering, and a booking landing in the calendar.</p>
+      <div class="bezel embed rv" style="--d:3">
+        <div class="core vsl" data-vsl data-state="idle">
+          <!-- drop the file in here: src is the video, poster is the still behind it -->
+          <video class="vsl-video" src="" poster="" preload="auto" playsinline webkit-playsinline
+                 disablepictureinpicture disableremoteplayback></video>
+          <p class="vsl-empty"><span class="blank">[ video url ]</span></p>
+          <button type="button" class="vsl-sound" aria-label="Turn on sound">
+            <span class="vsl-pill">
+              <svg class="vsl-ico-off" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 9l5 6M21 9l-5 6"/></svg>
+              <svg class="vsl-ico-play" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+              <span class="vsl-txt-sound">Tap for sound</span>
+              <span class="vsl-txt-watch">Tap to watch</span>
+            </span>
+          </button>
+          <div class="vsl-paused" aria-hidden="true"><svg width="54" height="54" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg></div>
+          <div class="vsl-end">
+            <p class="vsl-end-title">Want one like this?</p>
+            <a class="btn" href="/hummingbird/contact/#demoForm">Get a free demo</a>
+            <button type="button" class="vsl-replay">Watch again</button>
+          </div>
+          <div class="vsl-bar">
+            <button type="button" class="vsl-toggle" aria-label="Play or pause"><svg class="i-pause" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg><svg class="i-play" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg></button>
+            <button type="button" class="vsl-mute" aria-label="Mute or unmute"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3z"/><path class="vsl-wave" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+            <div class="vsl-track"><div class="vsl-fill"></div></div>
+            <button type="button" class="vsl-full" aria-label="Full screen"><svg class="i-expand" width="18" height="18" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5"/></svg><svg class="i-collapse" width="18" height="18" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 9h5V4M20 9h-5V4M20 15h-5v5M4 15h5v5"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" data-side="right">
+    <div class="col">
       <h2 class="rv" style="--d:1">Rather <em>talk</em> first?</h2>
       <p class="lede rv" style="--d:2">Reach our team in Michigan directly.</p>
       <div class="reach rv" style="--d:3">
@@ -285,7 +320,7 @@
           // letters carry their own index so the word can start wide and close up
           [...part].forEach((c, k) => {
             const ch = document.createElement('span');
-            ch.className = 'ch'; ch.textContent = c; ch.style.setProperty('--i', k);
+            ch.className = 'ch'; ch.textContent = c; ch.style.setProperty('--i', Math.min(k, 6));
             w.appendChild(ch);
           });
           mask.appendChild(w); frag.appendChild(mask);
@@ -297,12 +332,13 @@
   };
   document.querySelectorAll('h1.rv, h2.rv, blockquote.rv').forEach(splitWords);
   // the accent gradient runs across the whole phrase instead of restarting on every word
+  const docX = el => { let x = 0; for (let n = el; n; n = n.offsetParent) x += n.offsetLeft; return x; };
   const spanGradient = () => document.querySelectorAll('h1.split em').forEach(em => {
-    const box = em.getBoundingClientRect();
-    em.querySelectorAll('.wi').forEach(w => {
-      const r = w.getBoundingClientRect();
-      w.style.backgroundSize = Math.round(box.width) + 'px 100%';
-      w.style.backgroundPosition = Math.round(box.left - r.left) + 'px 0';
+    // measured from layout, not from painted boxes, so a mid animation transform cannot shift it
+    const x0 = docX(em), w = em.offsetWidth;
+    em.querySelectorAll('.ch').forEach(c => {
+      c.style.backgroundSize = w + 'px 100%';
+      c.style.backgroundPosition = (x0 - docX(c)) + 'px 0';
     });
   });
   spanGradient();
@@ -356,6 +392,79 @@
     e.preventDefault();
     const next = form.dataset.next || '/hummingbird/booking/';
     window.hbNavigate ? window.hbNavigate(next) : (location.href = next);
+  });
+
+  /* video player: a muted preview loops until you tap for sound, then it restarts with
+     audio. Same behaviour as the old site's player, rebuilt on our own markup. */
+  document.querySelectorAll('[data-vsl]').forEach(w => {
+    const v = w.querySelector('video');
+    if (!v || !v.getAttribute('src')) { w.classList.add('is-empty'); return; }
+    const set = s => w.setAttribute('data-state', s);
+    const full = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+    let engaged = false;
+    const tryPlay = () => { const p = v.play(); if (p && p.catch) p.catch(err => {
+      if (!engaged && err && err.name === 'NotAllowedError') set('blocked'); }); };
+
+    v.muted = true; v.defaultMuted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    w.setAttribute('data-muted', '');
+    tryPlay();
+    v.addEventListener('canplay', () => { if (!engaged && v.paused && w.dataset.state !== 'blocked') tryPlay(); });
+    v.addEventListener('timeupdate', () => {
+      if (!v.duration) return;
+      w.querySelector('.vsl-fill').style.width = (v.currentTime / v.duration * 100) + '%';
+    });
+    v.addEventListener('ended', () => {            // the silent preview loops; a watched run ends
+      if (!engaged) { v.currentTime = 0; tryPlay(); return; }
+      set('ended');
+    });
+    v.addEventListener('play', () => { if (engaged) set('playing'); });
+    v.addEventListener('pause', () => { if (engaged && !v.ended) set('paused'); });
+    v.addEventListener('contextmenu', e => e.preventDefault());
+
+    const withSound = () => {
+      engaged = true; v.currentTime = 0; v.muted = false; w.removeAttribute('data-muted'); set('playing');
+      const p = v.play();
+      if (p && p.catch) p.catch(() => { v.muted = true; w.setAttribute('data-muted', ''); const q = v.play(); if (q && q.catch) q.catch(() => {}); });
+    };
+    w.addEventListener('click', e => {
+      const t = e.target;
+      if (t.closest('.vsl-sound') || t.closest('.vsl-replay')) return withSound();
+      if (t.closest('.vsl-mute')) { v.muted = !v.muted; w.toggleAttribute('data-muted', v.muted); return; }
+      if (t.closest('.vsl-full')) {
+        if (full()) return (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        const p = w.requestFullscreen ? w.requestFullscreen()
+                : w.webkitRequestFullscreen ? w.webkitRequestFullscreen()
+                : v.webkitEnterFullscreen && v.webkitEnterFullscreen();
+        if (p && p.catch) p.catch(() => {});
+        return;
+      }
+      if (t.closest('.vsl-toggle') || t.closest('.vsl-video')) { if (engaged) v.paused ? v.play() : v.pause(); }
+    });
+    const syncFull = () => w.toggleAttribute('data-full', full() === w);
+    addEventListener('fullscreenchange', syncFull);
+    addEventListener('webkitfullscreenchange', syncFull);
+  });
+
+  /* the booking widget reports its height by postMessage. Its own resizer looks for a
+     wrapper id this embed does not have, so we read the height off the message instead.
+     Origin checked, so only the calendar host can resize its frame. */
+  const cal = document.querySelector('iframe[data-ghl]');
+  if (cal) addEventListener('message', e => {
+    let host; try { host = new URL(e.origin).hostname; } catch (err) { return; }
+    if (!/(^|\.)leadconnectorhq\.com$|(^|\.)msgsndr\.com$/.test(host)) return;
+    let d = e.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+    if (!d || typeof d !== 'object') return;
+    let h = 0;
+    (function dig(o, depth) {
+      if (!o || depth > 3 || typeof o !== 'object') return;
+      for (const k in o) {
+        const val = o[k];
+        if (/height/i.test(k) && !/max|min/i.test(k)) { const n = parseInt(val, 10); if (n > h) h = n; }
+        else if (val && typeof val === 'object') dig(val, depth + 1);
+      }
+    })(d, 0);
+    if (h >= 200 && h <= 6000) cal.style.height = h + 'px';
   });
 
   /* smooth wheel: the page eases toward where the wheel sends it instead of stepping in notches.

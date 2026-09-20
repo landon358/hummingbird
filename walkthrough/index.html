@@ -267,7 +267,7 @@
           // letters carry their own index so the word can start wide and close up
           [...part].forEach((c, k) => {
             const ch = document.createElement('span');
-            ch.className = 'ch'; ch.textContent = c; ch.style.setProperty('--i', k);
+            ch.className = 'ch'; ch.textContent = c; ch.style.setProperty('--i', Math.min(k, 6));
             w.appendChild(ch);
           });
           mask.appendChild(w); frag.appendChild(mask);
@@ -279,12 +279,13 @@
   };
   document.querySelectorAll('h1.rv, h2.rv, blockquote.rv').forEach(splitWords);
   // the accent gradient runs across the whole phrase instead of restarting on every word
+  const docX = el => { let x = 0; for (let n = el; n; n = n.offsetParent) x += n.offsetLeft; return x; };
   const spanGradient = () => document.querySelectorAll('h1.split em').forEach(em => {
-    const box = em.getBoundingClientRect();
-    em.querySelectorAll('.wi').forEach(w => {
-      const r = w.getBoundingClientRect();
-      w.style.backgroundSize = Math.round(box.width) + 'px 100%';
-      w.style.backgroundPosition = Math.round(box.left - r.left) + 'px 0';
+    // measured from layout, not from painted boxes, so a mid animation transform cannot shift it
+    const x0 = docX(em), w = em.offsetWidth;
+    em.querySelectorAll('.ch').forEach(c => {
+      c.style.backgroundSize = w + 'px 100%';
+      c.style.backgroundPosition = (x0 - docX(c)) + 'px 0';
     });
   });
   spanGradient();
@@ -338,6 +339,79 @@
     e.preventDefault();
     const next = form.dataset.next || '/hummingbird/booking/';
     window.hbNavigate ? window.hbNavigate(next) : (location.href = next);
+  });
+
+  /* video player: a muted preview loops until you tap for sound, then it restarts with
+     audio. Same behaviour as the old site's player, rebuilt on our own markup. */
+  document.querySelectorAll('[data-vsl]').forEach(w => {
+    const v = w.querySelector('video');
+    if (!v || !v.getAttribute('src')) { w.classList.add('is-empty'); return; }
+    const set = s => w.setAttribute('data-state', s);
+    const full = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+    let engaged = false;
+    const tryPlay = () => { const p = v.play(); if (p && p.catch) p.catch(err => {
+      if (!engaged && err && err.name === 'NotAllowedError') set('blocked'); }); };
+
+    v.muted = true; v.defaultMuted = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    w.setAttribute('data-muted', '');
+    tryPlay();
+    v.addEventListener('canplay', () => { if (!engaged && v.paused && w.dataset.state !== 'blocked') tryPlay(); });
+    v.addEventListener('timeupdate', () => {
+      if (!v.duration) return;
+      w.querySelector('.vsl-fill').style.width = (v.currentTime / v.duration * 100) + '%';
+    });
+    v.addEventListener('ended', () => {            // the silent preview loops; a watched run ends
+      if (!engaged) { v.currentTime = 0; tryPlay(); return; }
+      set('ended');
+    });
+    v.addEventListener('play', () => { if (engaged) set('playing'); });
+    v.addEventListener('pause', () => { if (engaged && !v.ended) set('paused'); });
+    v.addEventListener('contextmenu', e => e.preventDefault());
+
+    const withSound = () => {
+      engaged = true; v.currentTime = 0; v.muted = false; w.removeAttribute('data-muted'); set('playing');
+      const p = v.play();
+      if (p && p.catch) p.catch(() => { v.muted = true; w.setAttribute('data-muted', ''); const q = v.play(); if (q && q.catch) q.catch(() => {}); });
+    };
+    w.addEventListener('click', e => {
+      const t = e.target;
+      if (t.closest('.vsl-sound') || t.closest('.vsl-replay')) return withSound();
+      if (t.closest('.vsl-mute')) { v.muted = !v.muted; w.toggleAttribute('data-muted', v.muted); return; }
+      if (t.closest('.vsl-full')) {
+        if (full()) return (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        const p = w.requestFullscreen ? w.requestFullscreen()
+                : w.webkitRequestFullscreen ? w.webkitRequestFullscreen()
+                : v.webkitEnterFullscreen && v.webkitEnterFullscreen();
+        if (p && p.catch) p.catch(() => {});
+        return;
+      }
+      if (t.closest('.vsl-toggle') || t.closest('.vsl-video')) { if (engaged) v.paused ? v.play() : v.pause(); }
+    });
+    const syncFull = () => w.toggleAttribute('data-full', full() === w);
+    addEventListener('fullscreenchange', syncFull);
+    addEventListener('webkitfullscreenchange', syncFull);
+  });
+
+  /* the booking widget reports its height by postMessage. Its own resizer looks for a
+     wrapper id this embed does not have, so we read the height off the message instead.
+     Origin checked, so only the calendar host can resize its frame. */
+  const cal = document.querySelector('iframe[data-ghl]');
+  if (cal) addEventListener('message', e => {
+    let host; try { host = new URL(e.origin).hostname; } catch (err) { return; }
+    if (!/(^|\.)leadconnectorhq\.com$|(^|\.)msgsndr\.com$/.test(host)) return;
+    let d = e.data;
+    if (typeof d === 'string') { try { d = JSON.parse(d); } catch (err) { return; } }
+    if (!d || typeof d !== 'object') return;
+    let h = 0;
+    (function dig(o, depth) {
+      if (!o || depth > 3 || typeof o !== 'object') return;
+      for (const k in o) {
+        const val = o[k];
+        if (/height/i.test(k) && !/max|min/i.test(k)) { const n = parseInt(val, 10); if (n > h) h = n; }
+        else if (val && typeof val === 'object') dig(val, depth + 1);
+      }
+    })(d, 0);
+    if (h >= 200 && h <= 6000) cal.style.height = h + 'px';
   });
 
   /* smooth wheel: the page eases toward where the wheel sends it instead of stepping in notches.
