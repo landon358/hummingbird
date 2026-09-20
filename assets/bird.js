@@ -560,12 +560,29 @@ function setRot(node, x, y, z, order = 'XYZ') {
 // reduced motion: no flying bird; the static imprint logo stands in for it
 const REDUCE_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
 if (REDUCE_MOTION) { canvas.style.display = 'none'; showImprint(false); document.documentElement.classList.remove('transit'); }
-else fetch('/hummingbird/assets/hummingbird.glb').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(bin => new GLTFLoader().parse(bin, '', gltf => {
+else fetch('/assets/hummingbird.glb').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); }).then(bin => new GLTFLoader().parse(bin, '', gltf => {
   gltf.scene.traverse(o => {
     if (o.isMesh) { if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals(); o.material = birdMat; o.frustumCulled = false; }
     o.userData.q0 = o.quaternion.clone();
     if (o.name) rig[o.name] = o;
   });
+  // each wing mesh carries a lump of torso at its root, which swings out of the body on every
+  // beat. It lives inboard of the shoulder, so drop the triangles on that side of the cut.
+  const trimWing = (mesh, sign, cut = .02) => {
+    if (!mesh || !mesh.geometry) return 0;
+    const g = mesh.geometry, pos = g.attributes.position, idx = g.index;
+    const tri = idx ? idx.count / 3 : pos.count / 3, keep = [];
+    for (let t = 0; t < tri; t++) {
+      const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+      const z = (pos.getZ(i0) + pos.getZ(i1) + pos.getZ(i2)) / 3 * sign;
+      if (z >= cut) keep.push(i0, i1, i2);
+    }
+    const dropped = tri - keep.length / 3;
+    g.setIndex(keep); g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
+    return dropped;
+  };
+  const trimmed = [trimWing(rig.WingR, 1), trimWing(rig.WingL, -1)];
+
   offset.add(gltf.scene);
   const size = new THREE.Box3().setFromObject(gltf.scene).getSize(new THREE.Vector3());
   birdLen = Math.max(size.x, size.z);
@@ -888,6 +905,7 @@ if (new URLSearchParams(location.search).has('debug')) window.__bird = {
   get scale() { return flightScale; },
 
   rig, fold: FOLD, slow: SLOW, params,
+  get wingTrim() { return { WingR: rig.WingR?.geometry.index.count / 3, WingL: rig.WingL?.geometry.index.count / 3 }; },
   get pose() { return { yaw: yawS, bank, idle: idleS, off, dir, turnT }; },
   get perch() { return { on: perched, k: +perchK.toFixed(3), page: Math.round(perchPage), base: Math.round(perchBase), anchor: perchAnchor, x: +perchX.toFixed(2) }; },
   get beams() { const u = asciiMat.uniforms; return BEAMS.map((b, i) => ({ c: +u.uBeamC.value[i].toFixed(3), h: +u.uBeamH.value[i].toFixed(3), dir: +u.uBeamDir.value[i].toFixed(2) })); },
