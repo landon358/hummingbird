@@ -1,5 +1,8 @@
 :root{
   --bg:#09090b;--fg:#ecede8;
+  /* brand palette from the logo pack: the mark sits on ivory, never pure white */
+  --ivory:#f5f3ef;--ink:#111113;
+  --brand:linear-gradient(28deg,#2dbf94 0%,#2eb2ea 52%,#b290ec 100%);
   --dim:color-mix(in srgb,var(--fg) 58%,var(--bg));
   --faint:color-mix(in srgb,var(--fg) 34%,var(--bg));
   --hair:color-mix(in srgb,var(--fg) 9%,transparent);
@@ -50,7 +53,7 @@ main{position:relative;z-index:1}
 .nav>*{pointer-events:auto}
 .brand{display:flex;align-items:center;gap:0;padding-block:6px;border-radius:12px;text-decoration:none;color:var(--fg);transition:transform var(--t-press) var(--out)}
 .brand:active{transform:scale(.97)}
-#birdSlot{position:relative;display:block;width:64px;height:calc(64px * .63)}
+#birdSlot{position:relative;display:block;width:64px;height:calc(64px * .704)}   /* the mark's own aspect */
 .brand .word{font:500 36px/1 var(--display);letter-spacing:-.001em;white-space:nowrap}
 
 /* ---------- logo imprint: the ASCII bird left behind in iridescent color ---------- */
@@ -179,12 +182,12 @@ blockquote{position:relative;font:400 clamp(34px,3.7vw,62px)/1.06 var(--serif);l
 
 
 
-footer{position:relative;z-index:1;margin-top:var(--s6);padding:var(--s8) clamp(20px,5vw,88px) var(--s7);
+footer{position:relative;z-index:1;margin-top:var(--s8);padding:var(--s8) clamp(20px,5vw,88px) var(--s7);
   border-top:1px solid var(--hair)}
 .foot{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:var(--s7) var(--s7);align-items:start}
 .foot-brand{display:flex;align-items:center;gap:0;text-decoration:none;color:var(--fg)}
 .foot-mark{position:relative;display:block;width:44px;height:28px;flex:none}
-.foot-mark::before{content:"";position:absolute;inset:-8% -3%;background:color-mix(in srgb,var(--fg) 82%,var(--bg));
+.foot-mark::before{content:"";position:absolute;inset:-8% -3%;background:color-mix(in srgb,var(--ivory) 86%,var(--bg));
   -webkit-mask:url(/hummingbird/assets/logo-mask.png) center/contain no-repeat;mask:url(/hummingbird/assets/logo-mask.png) center/contain no-repeat}
 .foot-brand b{font:500 25px/1 var(--display);letter-spacing:-.001em}
 .foot-line{margin-top:var(--s4);max-width:30ch;color:var(--dim);font-size:15px;line-height:1.55}
@@ -208,6 +211,18 @@ footer{position:relative;z-index:1;margin-top:var(--s6);padding:var(--s8) clamp(
   .foot{grid-template-columns:1fr}
   .foot-base .sep{margin-left:0}
 }
+
+/* long form legal copy: one readable column, quiet subheads */
+.doc{max-width:70ch}
+.doc h3{font:500 clamp(19px,1.7vw,23px)/1.25 var(--display);letter-spacing:-.025em;margin-top:var(--s7)}
+.doc h3:first-child{margin-top:0}
+.doc p{margin-top:var(--s3);color:var(--dim);font-size:15px;line-height:1.75}
+.doc p strong{color:var(--fg);font-weight:500}
+.doc ul{list-style:none;margin-top:var(--s4);display:grid;gap:var(--s3)}
+.doc li{display:flex;gap:var(--s3);color:var(--dim);font-size:15px;line-height:1.6}
+.doc li::before{content:"";flex:none;width:5px;height:5px;margin-top:9px;border-radius:50%;background:color-mix(in srgb,var(--fg) 38%,transparent)}
+.updated{margin-top:var(--s4);color:var(--faint);font-size:13px}
+.form-note{grid-column:1/-1;margin-top:var(--s2);color:var(--faint);font-size:13px;line-height:1.6}
 
 /* ---------- placeholders to fill in ---------- */
 .blank{font:500 .82em/1.2 var(--mono);letter-spacing:.04em;text-transform:none;color:#ff9438;background:color-mix(in srgb,#ff9438 12%,transparent);padding:.15em .55em;border-radius:8px;white-space:nowrap}
@@ -271,7 +286,7 @@ h1.split em .wi{background:var(--iri);-webkit-background-clip:text;background-cl
   .burger{display:block}
 }
 @media (max-width:767px){
-  #birdSlot{width:52px;height:33px}
+  #birdSlot{width:52px;height:37px}
   .brand .word{font-size:30px}
   .chapter{display:block;padding:128px 16px 96px}
   .hero .col{padding-top:0}

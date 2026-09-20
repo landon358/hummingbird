@@ -13,6 +13,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="icon" href="/hummingbird/assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/hummingbird/assets/icon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/hummingbird/assets/icon-64.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="/hummingbird/assets/icon-180.png">
+<meta name="theme-color" content="#09090b">
 <link rel="stylesheet" href="/hummingbird/assets/site.css">
 </head>
 <body>
@@ -47,10 +52,10 @@
         <div class="core">
           <label class="field"><span>Name</span><input name="name" autocomplete="name" required></label>
           <label class="field"><span>Business name</span><input name="business" autocomplete="organization" required></label>
-          <label class="field"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
-          <label class="field"><span>Phone</span><input name="phone" type="tel" autocomplete="tel"></label>
+          <label class="field wide"><span>Email</span><input name="email" type="email" autocomplete="email" required></label>
           <label class="field wide"><span>Current website, if you have one</span><input name="website" type="url" placeholder="https://"></label>
           <label class="field wide"><span>What does your business do?</span><textarea name="about"></textarea></label>
+          <p class="form-note">We reply by email. No phone number needed, and we never pass your details on. See our <a class="inline" href="/hummingbird/privacy/">privacy policy</a>.</p>
           <button class="btn" type="submit">Get a free demo</button>
         </div>
       </form>
@@ -112,7 +117,8 @@
   <div class="foot-base">
     <span>© 2026 Hummingbird</span>
     <span>Built in Michigan, working across the US</span>
-    <a class="sep" href="/hummingbird/terms/">Terms, privacy and credits</a>
+    <a class="sep" href="/hummingbird/terms/">Terms</a>
+      <a href="/hummingbird/privacy/">Privacy</a>
   </div>
 </footer>
 
@@ -351,6 +357,30 @@
     const next = form.dataset.next || '/hummingbird/booking/';
     window.hbNavigate ? window.hbNavigate(next) : (location.href = next);
   });
+
+  /* smooth wheel: the page eases toward where the wheel sends it instead of stepping in notches.
+     Light on purpose, so trackpads keep their own momentum and nothing feels laggy. */
+  const fine = matchMedia('(pointer: fine)'), calm = matchMedia('(prefers-reduced-motion: reduce)');
+  let target = scrollY, cur = scrollY, raf = 0, lastT = 0;
+  const maxY = () => document.documentElement.scrollHeight - innerHeight;
+  const tick = now => {
+    const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+    cur += (target - cur) * (1 - Math.exp(-dt * 9));   // about a 110ms glide, frame rate independent
+    if (Math.abs(target - cur) < .5) cur = target;
+    window.scrollTo({ top: cur, behavior: 'instant' });
+    raf = cur === target ? 0 : requestAnimationFrame(tick);
+  };
+  addEventListener('wheel', e => {
+    if (!fine.matches || calm.matches || e.ctrlKey || document.body.classList.contains('menu-open')) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+    if (e.target.closest?.('textarea,select')) return;
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1;
+    if (!raf) { target = cur = scrollY; lastT = performance.now(); raf = requestAnimationFrame(tick); }
+    target = Math.max(0, Math.min(maxY(), target + e.deltaY * unit));
+  }, { passive: false });
+  // keys, the scrollbar and links move the page natively; pick up from wherever they leave it
+  addEventListener('scroll', () => { if (!raf) target = cur = scrollY; }, { passive: true });
 })();
 </script>
 

@@ -102,14 +102,17 @@ function buildAtlas() {
 }
 
 /* ---------- ascii pass ---------- */
+// beams of coloured light the page scrolls through, one per section on the home page
+const NB = 6;
 const asciiMat = new THREE.ShaderMaterial({
   uniforms: {
     tScene: { value: sceneRT.texture }, tTrail: { value: trailRT.texture }, tGlyphs: { value: atlasTex },
     uRes: { value: new THREE.Vector2() }, uCell: { value: 7 }, uCount: { value: 11 },
     uTime: { value: 0 }, uShimmer: { value: 1 }, uIdle: { value: .15 }, uRaw: { value: 0 }, uBg: { value: new THREE.Vector3(.035, .035, .043) }, uBase: { value: new THREE.Vector3(.88, .9, .86) },
     uRip: { value: Array.from({ length: 4 }, () => new THREE.Vector3(0, 0, -99)) }, uAspectR: { value: 1 },
-    uBandC: { value: -9 }, uBandH: { value: .5 }, uBandTilt: { value: .18 },
-    uBandBg: { value: new THREE.Vector3(.043, .071, .184) }, uBandFg: { value: new THREE.Vector3(.56, .80, .93) }
+    uBandTilt: { value: .18 }, uBeamN: { value: 0 },
+    uBeamC: { value: new Array(NB).fill(-9) }, uBeamH: { value: new Array(NB).fill(.5) }, uBeamDir: { value: new Array(NB).fill(0) },
+    uBeamCol: { value: Array.from({ length: NB }, () => new THREE.Vector3()) }
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }`,
   fragmentShader: `
@@ -117,8 +120,10 @@ const asciiMat = new THREE.ShaderMaterial({
     uniform vec3 uBg, uBase;
     uniform vec2 uRes; uniform float uCell, uCount, uTime, uShimmer, uIdle, uRaw, uAspectR;
     uniform vec3 uRip[4];
-    uniform float uBandC, uBandH, uBandTilt;
-    uniform vec3 uBandBg, uBandFg;
+    #define NB 6
+    uniform float uBandTilt, uBeamN;
+    uniform float uBeamC[NB], uBeamH[NB], uBeamDir[NB];
+    uniform vec3 uBeamCol[NB];
     varying vec2 vUv;
 
     float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
@@ -144,15 +149,17 @@ const asciiMat = new THREE.ShaderMaterial({
     }
     float M(vec4 s){ return step(.01, s.a); }
 
-    // a strip of colour the page scrolls through; the bird takes it on as it passes
-    float bandAt(vec2 uv){
-      float y = uv.y + (uv.x - .5) * uBandTilt;
-      return 1. - smoothstep(.45, 1., abs(y - uBandC) / max(uBandH, .001));
-    }
-
     void main(){
-      float band = bandAt(vUv);
-      vec3 bg = mix(uBg, uBandBg, band * .92);
+      // the strongest beam over this pixel: its coverage, colour, a soft bright core, and which way the bird is crossing it
+      float band = 0., core = 0., bdir = 0.; vec3 bcol = vec3(0.);
+      float yb = vUv.y + (vUv.x - .5) * uBandTilt;
+      for(int i = 0; i < NB; i++){
+        if(float(i) >= uBeamN) break;
+        float q = abs(yb - uBeamC[i]) / max(uBeamH[i], .001);
+        float k = 1. - smoothstep(.45, 1., q);
+        if(k > band){ band = k; bcol = uBeamCol[i]; bdir = uBeamDir[i]; core = exp(-q * q * 3.); }
+      }
+      vec3 bg = mix(uBg, bcol * .19, band * .92) + bcol * .03 * core * band;
       if(uRaw > .5){ vec4 s = texture2D(tScene, vUv); gl_FragColor = vec4(mix(bg, s.rgb, M(s)),1.); return; }
 
       vec2 frag  = vUv * uRes;
@@ -190,21 +197,29 @@ const asciiMat = new THREE.ShaderMaterial({
       float n = uCount - 1.;
       float idx = floor(clamp(g,0.,1.) * n + .5);
 
+      // the rim of a beam: where the bird crosses into or out of the light
+      float rim = 4. * band * (1. - band);
       float gh = hash(cell + floor(uTime * 22.));
-      float gl = max(tr, rip * .9);
+      float gl = max(max(tr, rip * .9), rim * .6 * mk);
       float swap = step(.15, gl) * step(1. - gl * .8, gh) * mk;
       idx = mix(idx, 1. + floor(hash(cell * 1.7 + floor(uTime * 22.)) * n), swap);
 
       vec2 auv = vec2((mod(idx,16.) + local.x) / 16., 1. - (floor(idx/16.) + 1. - local.y) / 16.);
       float glyph = texture2D(tGlyphs, auv).r;
 
-      vec3 base = mix(uBase, uBandFg, band * .85) * (.3 + .7*g);
+      // inside the light the bird takes a much lighter version of its colour
+      vec3 base = mix(uBase, mix(bcol, vec3(1.), .58), band * .85) * (.3 + .7*g);
       float t = s.g * .9 + s.b * 1.2 + uTime * .08 + hash(cell) * .05 + tr * .35 + rip * .6 + vUv.x * .2;
       vec3 iri = mix(iridescent(t), emerald(t * .8), smoothstep(.35, .75, dorsal)) * 1.3;
 
       float m = max(clamp(tr * 1.8, 0., 1.) * (.35 + .65 * edge), rip * mk);
       m = max(m, uIdle * edge * mk);
       vec3 col = mix(base, iri, clamp(m * uShimmer, 0., 1.));
+      // glimmer at the rim: shades of the beam on the way in, the whole iridescent range on the way out
+      float sh = hash(cell * 1.3 + floor(uTime * 14.));
+      vec3 shades = mix(bcol * .55, mix(bcol, vec3(1.), .7), sh) * 1.25;
+      vec3 rainbow = iridescent(sh * .9 + uTime * .3 + vUv.y * 1.5) * 1.3;
+      col = mix(col, mix(shades, rainbow, bdir), clamp(rim * mk * 1.35, 0., 1.));
 
       gl_FragColor = vec4(mix(bg, col, glyph), 1.);
     }`
@@ -328,9 +343,10 @@ function updateTextRipple() {
      cross  between chapters it rides the empty gap as that gap scrolls up the screen,
             entering low on the old side, dipping behind the page at the middle, leaving high on the new side
    Keys are pinned to scroll positions measured from the real text, so the bird flies around the copy, not over it. */
-let PATH = null, KEY_S = [], KEY_P = [], birdLen = .8, flightScale = 1, bandPage = -9999, bandPx = 0;
-let perchPage = -99999, perchBase = -99999, perchX = 0, perchLift = 0, perched = false, perchK = 0, perchAnchor = 1, hopT = 0;
-const FOLD = { x: -.24, y: -.5, z: .12, scale: .2, tail: .3 };   // wings closed against the body when sitting
+let PATH = null, KEY_S = [], KEY_P = [], birdLen = .8, flightScale = 1;
+let BEAMS = [];   // { page, px, dist } per beam: centre and height on the page, last distance to the bird
+let perchPage = -99999, perchBase = -99999, perchX = 0, perchLift = 0, perched = false, perchK = 0, perchAnchor = 1, perchFresh = true, perchDrop = 0;
+const FOLD = { x: -.24, y: -.5, z: .12, scale: .2, tail: .3, pitch: .5, look: .35, sit: -.12, size: .66 };   // wings closed against the body when sitting
 function viewHalf() { const hh = camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)); return [hh * camera.aspect, hh]; }
 function pageTop(el) { let y = 0; for (; el; el = el.offsetParent) y += el.offsetTop; return y; }
 function buildPath() {
@@ -380,10 +396,16 @@ function buildPath() {
   perchLift = birdLen * flightScale * .6;       // raise the body so the feet meet the line
 
   // the strip sits across one chapter, so the bird flies through it on the way past
-  const bandOn = chapters.length >= 3 ? chapters[Math.min(3, chapters.length - 1)] : null;   // short pages stay plain
-  if (bandOn) { bandPage = (bandOn.top + bandOn.bottom) / 2; bandPx = Math.max(vh * .62, (bandOn.bottom - bandOn.top) + vh * .3); }
-  else { bandPage = -99999; bandPx = vh; }
-  asciiMat.uniforms.uBandH.value = bandPx / vh * .5;
+  // the home page lights every other section in one of the iridescent colours; other pages keep a single royal blue strip
+  const IRI = [[.10, .85, .52], [.08, .70, .90], [.50, .36, 1.], [1., .22, .62], [1., .58, .22]];
+  const lit = document.querySelector('[data-beams]')
+    ? chapters.map((c, i) => [c, IRI[i % IRI.length]]).filter((_, i) => i % 2 === 1)   // every other section, the top one left dark
+    : chapters.length >= 3 ? [[chapters[Math.min(3, chapters.length - 1)], [.23, .37, .97]]] : [];
+  BEAMS = lit.slice(0, NB).map(([c, col], i) => {
+    asciiMat.uniforms.uBeamCol.value[i].set(...col);
+    return { page: (c.top + c.bottom) / 2, px: (c.bottom - c.top) + vh * .2, dist: 0 };
+  });
+  asciiMat.uniforms.uBeamN.value = BEAMS.length;
 
   KEY_S = []; KEY_P = [];
   for (const [s0, p] of raw) {
@@ -567,10 +589,11 @@ function logoScale() {
   const unitsPerPx = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) / innerHeight;
   return ui('birdSlot').offsetWidth * 1.3 * unitsPerPx;
 }
-let enterYaw = 0, idleS = 1, revT = 0, dir = 1, off = 0, offFrom = 0, offTo = 0, turnT = 1, turnDur = 1, turnPulse = 0, last = performance.now(), time = 0, phase = 0, bank = 0, yawS = 0, turnS = 0, headSnap = 0, headYaw = 0, headPitch = 0;
+let enterYaw = 0, idleS = 1, revT = 0, dir = 1, off = 0, offFrom = 0, offTo = 0, turnT = 1, turnDur = 1, turnPulse = 0, last = performance.now(), time = 0, phase = 0, bank = 0, bankV = 0, yawS = 0, yawV = 0, pitchS = 0, pitchV = 0, turnS = 0, headSnap = 0, headYaw = 0, headPitch = 0;
 const _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2(), _plane = new THREE.Plane(), _n = new THREE.Vector3();
 const _hp = new THREE.Vector3(), _tgt = new THREE.Vector3(), _nq = new THREE.Quaternion();
-const _perch = new THREE.Vector3(), _box = new THREE.Box3();
+const _perch = new THREE.Vector3(), _perchPrev = new THREE.Vector3(), _perchD = new THREE.Vector3(), _box = new THREE.Box3();
+const _bp = [0, 0, 0];
 const FEATHERS = [['L2', -2], ['L1', -1], ['C', 0], ['R1', 1], ['R2', 2]];
 
 function loop(now, manual) {
@@ -618,12 +641,12 @@ function loop(now, manual) {
   const anchor = (l1 < vhp * .16 && l2 > vhp * .22 && l2 < vhp * .96) ? 2 : 1;
   const lineY = anchor === 2 ? l2 : l1;
   const wasPerched = perched;
-  perched = mode === 'flight' && perchPage > 0 && l1 < vhp * (perched ? 1.06 : .97);
-  if (wasPerched && !perched) dispVel.y += 1.1;   // push off the line on the way back up
-  if (perched && anchor !== perchAnchor) hopT = .5;            // let the spring carry the hop
+  // land once the rule is well up the screen; take off only after it has clearly dropped back
+  perched = mode === 'flight' && perchPage > 0 && l1 < vhp * (perched ? .9 : .78);
+  if (wasPerched && !perched) dispVel.y += .5;    // a small push off the line on the way back up
+  if (anchor !== perchAnchor) perchFresh = true;  // a new rule: fly to it rather than carry across
   perchAnchor = anchor;
-  hopT = Math.max(0, hopT - dt);
-  perchK += ((perched ? 1 : 0) - perchK) * Math.min(1, dt * (perched ? 2.4 : 4.5));
+  perchK += ((perched ? 1 : 0) - perchK) * Math.min(1, dt * (perched ? 1.8 : 2.6));
   idle = Math.max(idle, perchK);
   const pos = trackPoint(scrollP);
   const h = headingAt(scrollP);
@@ -635,7 +658,7 @@ function loop(now, manual) {
   let yawGoal = h.yaw + off;
   let pitchBase = h.pitch * .7 * fwd + Math.abs(turnPulse) * .25;
   let bankPath = THREE.MathUtils.clamp(-fwd * kappa * .075, -1.2, 1.2) - turnPulse * 1.15;
-  let scaleGoal = flightScale, hardLock = false;
+  let scaleGoal = flightScale * THREE.MathUtils.lerp(1, FOLD.size, perchK), hardLock = false;   // a little smaller once it sits
   rollExtra = 0;
 
   if (mode === 'logo') {
@@ -670,7 +693,7 @@ function loop(now, manual) {
       const p1 = new THREE.Vector3(p0.x + d.x * reach * .55 - d.y * swing, p0.y + d.y * reach * .55 + d.x * swing, .3);
       enterPts = [p0, p1, p1.clone().lerp(end, .55).setZ(.2), end.clone()];
       enterCurve = new THREE.CatmullRomCurve3(enterPts, false, 'centripetal');
-      yawS = enterYaw = Math.abs(d.x) > .3 ? (d.x > 0 ? 0 : Math.PI) : (end.x >= p0.x ? 0 : Math.PI);
+      yawV = 0; yawS = enterYaw = Math.abs(d.x) > .3 ? (d.x > 0 ? 0 : Math.PI) : (end.x >= p0.x ? 0 : Math.PI);
       document.documentElement.classList.remove('transit');
     }
     enterT = Math.min(1, enterT + dt / 2.0);
@@ -698,11 +721,19 @@ function loop(now, manual) {
   // on the perch it sits in profile, looking back toward the page
   if (mode === 'flight' && perchK > 0) yawGoal += wrapA((perchX > 0 ? Math.PI : 0) - yawGoal) * perchK;
 
-  // turn at a capped rate so sudden heading changes become a swing, not a snap
-  const yawErr = wrapA(yawGoal - yawS), yawRate = mode === 'launch' || mode === 'enter' ? 14 : 4.5;
-  yawS += THREE.MathUtils.clamp(yawErr * Math.min(1, dt * (mode === 'launch' || mode === 'enter' ? 12 : 6)), -yawRate * dt, yawRate * dt);
-  const bankTarget = THREE.MathUtils.clamp(bankPath - dartV * 3. * idleS, -1.1, 1.1);
-  bank += (bankTarget - bank) * Math.min(1, dt * 3);
+  // heading, bank and pitch all ride critically damped springs: a turn eases in and eases out,
+  // and a sudden change of goal bends the motion instead of kinking it
+  const quick = mode === 'launch' || mode === 'enter';
+  const yawW = quick ? 13 : 5.2, yawMax = quick ? 14 : 4.2;
+  yawV += (yawW * yawW * wrapA(yawGoal - yawS) - 2 * yawW * yawV) * dt;
+  yawV = THREE.MathUtils.clamp(yawV, -yawMax, yawMax);
+  yawS += yawV * dt;
+  const bankTarget = THREE.MathUtils.clamp(bankPath - dartV * 3. * idleS * (1 - perchK), -1.1, 1.1) * (1 - perchK);
+  bankV += (16 * (bankTarget - bank) - 8 * bankV) * dt;       // natural frequency 4, no overshoot
+  bank += bankV * dt;
+  pitchV += (36 * (pitchBase - pitchS) - 12 * pitchV) * dt;  // natural frequency 6
+  pitchS += pitchV * dt;
+  if (quick) { pitchS = pitchBase; pitchV = 0; }
   const cres = Math.min(Math.abs(bank), 1.4);
 
   look.x += ((mouse.x - .5) - look.x) * Math.min(1, dt * 2.5);
@@ -728,16 +759,19 @@ function loop(now, manual) {
       // how far the lowest point sits under the body right now, so the feet land on the rule
       _box.setFromObject(offset);
       // the box corners overshoot the drawn silhouette, so add a slice of the height back to sit it on the rule
-      const drop = Number.isFinite(_box.min.y)
-        ? dispPos.y - _box.min.y + (_box.max.y - _box.min.y) * .09 : perchLift;
+      // eased toward the current pose, so it settles with the bird instead of freezing a mid turn shape;
+      // seated, the pose is still, so the feet stay put
+      const dropNow = Number.isFinite(_box.min.y) ? dispPos.y - _box.min.y + (_box.max.y - _box.min.y) * FOLD.sit : perchLift;
+      perchDrop = perchDrop ? perchDrop + (dropNow - perchDrop) * Math.min(1, dt * 3) : dropNow;
+      const drop = perchDrop;
       _perch.set(perchX, (.5 - ly / innerHeight) * 2 * hh2 + drop, 0);
+      if (perchFresh) { _perchPrev.copy(_perch); perchFresh = false; }
+      _perchD.copy(_perch).sub(_perchPrev); _perchPrev.copy(_perch);
       chase.lerp(_perch, perchK * perchK * (3 - 2 * perchK));
-    }
+    } else { perchFresh = true; _perchD.set(0, 0, 0); }
   }
   if (!placed) { placed = true; dispPos.copy(mode === 'logo' ? slotWorld(_tgt) : chase); }
-  if (perchK > .985 && hopT <= 0 && mode === 'flight') {   // sitting: locked to the rule, scroll moves it with the page and nothing else does
-    dispPos.copy(chase); dispVel.set(0, 0, 0);
-  } else if (hardLock) {
+  if (hardLock) {
     dispVel.copy(chase).sub(dispPos).divideScalar(Math.max(dt, 1e-3));
     dispPos.copy(chase);
   } else if (mode === 'exit') {
@@ -747,6 +781,9 @@ function loop(now, manual) {
     _proj.copy(dispPos).project(camera);
     if (!navigating && (Math.abs(_proj.x) > 1.45 || Math.abs(_proj.y) > 1.5 || exitT > 1.8)) { navigating = true; location.href = exitHref; }
   } else {
+    // once it is down, the bird moves with the rule as the page scrolls, so sitting never lags or snaps
+    const lockK = mode === 'flight' ? THREE.MathUtils.smoothstep(perchK, .7, 1) : 0;
+    if (lockK > 0) dispPos.addScaledVector(_perchD, lockK);
     // damped spring with a top speed, so anchor jumps become flight instead of teleports
     for (let s = 0; s < 2; s++) {
       const h2 = dt / 2;
@@ -766,7 +803,7 @@ function loop(now, manual) {
   if (wantCell !== cellOverride) { cellOverride = wantCell; buildAtlas(); }
 
   const yaw = yawS + dartV * 1.2 * idleS * live + bank * .15;
-  const pitch = THREE.MathUtils.lerp(pitchBase + Math.sin(time * 2.3 + 1) * .03 - cres * .12, .05, perchK);
+  const pitch = THREE.MathUtils.lerp(pitchS + Math.sin(time * 2.3 + 1) * .03 - cres * .12, FOLD.pitch, perchK);
   setRot(rig.Body, (bank + rollExtra) * (1 - perchK), yaw, pitch, 'YZX');
 
   if (rig.Neck) {
@@ -778,18 +815,20 @@ function loop(now, manual) {
       _tgt.sub(_hp).applyQuaternion(_nq);
       const ty = THREE.MathUtils.clamp(Math.atan2(-_tgt.z, _tgt.x), -1.5, 1.5);
       const tp = THREE.MathUtils.clamp(Math.atan2(_tgt.y, Math.hypot(_tgt.x, _tgt.z)), -.7, .7);
-      headYaw += (ty * idleS - headYaw) * Math.min(1, dt * 6);
-      headPitch += (tp * idleS - headPitch) * Math.min(1, dt * 6);
+      const look = idleS * (1 - perchK * (1 - FOLD.look));   // how much the head follows the pointer
+      headYaw += (ty * look - headYaw) * Math.min(1, dt * 6);
+      headPitch += (tp * look - headPitch) * Math.min(1, dt * 6);
     }
   }
 
-  turnS += (THREE.MathUtils.clamp(fwd * kappa * .04 + turnPulse * .7 + dartV * 3. * idleS, -1.2, 1.2) - turnS) * Math.min(1, dt * 3);
+  turnS += (THREE.MathUtils.clamp(fwd * kappa * .04 + turnPulse * .7 + dartV * 3. * idleS * live, -1.2, 1.2) - turnS) * Math.min(1, dt * 3);
   const w = time * 3.1;
   headSnap += ((Math.round(Math.sin(time * .55) * 1.5 + Math.sin(time * 1.3) * .6) * .18) * (1 - idleS) - headSnap) * Math.min(1, dt * 9);
-  setRot(rig.Hips, Math.sin(w + 1.2) * .05, -turnS * .35 + Math.sin(w * .6) * .06, Math.sin(w) * .09 - pitch * .3 - cres * .55, 'YZX');
-  setRot(rig.Chest, Math.sin(w * .6 + .5) * .04, turnS * .2 + Math.sin(w * .6 + .9) * .05, Math.sin(w + .9) * .06 + cres * .3, 'YZX');
-  setRot(rig.Neck, 0, turnS * .25 + headYaw * .4, Math.sin(w + 1.8) * .07 + cres * .3 + headPitch * .35, 'YZX');
-  setRot(rig.Head, Math.sin(time * 1.7) * .14 * (1 - idleS * .6) - bank * .3, turnS * .25 + headSnap + headYaw * .6, Math.sin(w + 2.7) * -.05 + cres * .25 + headPitch * .65, 'YZX');
+  // sitting, the hovering body undulation stops; only the head keeps looking around
+  setRot(rig.Hips, Math.sin(w + 1.2) * .05 * live, -turnS * .35 + Math.sin(w * .6) * .06 * live, Math.sin(w) * .09 * live - pitch * .3 - cres * .55, 'YZX');
+  setRot(rig.Chest, Math.sin(w * .6 + .5) * .04 * live, turnS * .2 + Math.sin(w * .6 + .9) * .05 * live, Math.sin(w + .9) * .06 * live + cres * .3, 'YZX');
+  setRot(rig.Neck, 0, turnS * .25 + headYaw * .4, Math.sin(w + 1.8) * .07 * live + cres * .3 + headPitch * .35, 'YZX');
+  setRot(rig.Head, Math.sin(time * 1.7) * .14 * (1 - idleS * .6) * live - bank * .3, turnS * .25 + headSnap + headYaw * .6, Math.sin(w + 2.7) * -.05 + cres * .25 + headPitch * .65, 'YZX');
 
   // perched, the wings wind down and close against the body rather than cutting out mid beat
   phase += dt * THREE.MathUtils.lerp(params.flap, 4, perchK);
@@ -819,7 +858,15 @@ function loop(now, manual) {
   renderer.setRenderTarget(trailRT); renderer.clear(); renderer.render(trailScene, quadCam);
   renderer.setRenderTarget(null);
   const u = asciiMat.uniforms;
-  u.uBandC.value = 1 - (bandPage - scrollY) / innerHeight;   // page position to screen, bottom up
+  // beams: page position to screen (bottom up), and whether the bird is heading into or out of each
+  offset.position.clone().project(camera).toArray(_bp);
+  const birdV = (_bp[1] + 1) / 2;
+  BEAMS.forEach((b, i) => {
+    const c = 1 - (b.page - scrollY) / innerHeight, dist = Math.abs(birdV - c);
+    u.uBeamC.value[i] = c; u.uBeamH.value[i] = b.px / innerHeight * .5;
+    if (Math.abs(dist - b.dist) > 6e-4) u.uBeamDir.value[i] += ((dist > b.dist ? 1 : 0) - u.uBeamDir.value[i]) * Math.min(1, dt * 8);
+    b.dist = dist;
+  });
   u.uTime.value = time; u.uShimmer.value = params.shim; u.uIdle.value = params.idle; u.uRaw.value = params.raw ? 1 : 0;
   renderer.render(asciiScene, quadCam);
 
@@ -837,11 +884,11 @@ if (new URLSearchParams(location.search).has('debug')) window.__bird = {
       const x = (v.x + 1) / 2 * innerWidth, y = (1 - v.y) / 2 * innerHeight; r[0] = Math.min(r[0], x); r[1] = Math.min(r[1], y); r[2] = Math.max(r[2], x); r[3] = Math.max(r[3], y); }
     return r.map(Math.round); },
   get scale() { return flightScale; },
-  setBand(page) { bandPage = page; },
+
   rig, fold: FOLD,
   get pose() { return { yaw: yawS, bank, idle: idleS, off, dir, turnT }; },
   get perch() { return { on: perched, k: +perchK.toFixed(3), page: Math.round(perchPage), base: Math.round(perchBase), anchor: perchAnchor, x: +perchX.toFixed(2) }; },
-  get band() { const u = asciiMat.uniforms; return { center: +u.uBandC.value.toFixed(3), half: +u.uBandH.value.toFixed(3), page: Math.round(bandPage) }; },
+  get beams() { const u = asciiMat.uniforms; return BEAMS.map((b, i) => ({ c: +u.uBeamC.value[i].toFixed(3), h: +u.uBeamH.value[i].toFixed(3), dir: +u.uBeamDir.value[i].toFixed(2) })); },
   // poses the bird exactly as the header logo draws it, at a chosen wing phase and moment
   logoPose(ph = 0, t = 0) { mode = 'logo'; phase = ph; time = t; loop(last, true); },
   // the bird's silhouette at real resolution, as rows of 0 and 1 (used to trace a line drawing of the logo)
