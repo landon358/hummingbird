@@ -428,6 +428,25 @@ main,footer{transition:opacity .6s var(--ease)}
 .vsl:-webkit-full-screen .vsl-video{object-fit:contain}
 @media (prefers-reduced-motion:reduce){.vsl-pill{animation:none}}
 
+/* the calendar over the page: a dialog, so escape and the focus trap come for free */
+.cal-modal{width:min(560px,100%);max-width:min(560px,calc(100vw - 2 * var(--s4)));max-height:min(92dvh,900px);
+  margin:auto;   /* the global reset zeroes it, which parks a modal dialog in the corner */
+  padding:0;border:0;background:none;overflow:visible;color:var(--fg)}
+.cal-modal::backdrop{background:color-mix(in srgb,#000 72%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.cal-modal[open]{animation:calIn 320ms var(--out) both}
+.cal-modal[open]::backdrop{animation:calVeil 260ms linear both}
+@keyframes calIn{from{opacity:0;transform:translateY(12px) scale(.98)}}
+@keyframes calVeil{from{opacity:0}}
+.cal-modal-panel{position:relative;border-radius:26px;overflow:hidden;background:var(--bg);
+  box-shadow:inset 0 0 0 1px var(--hair),0 40px 90px -30px rgba(0,0,0,.9)}
+.cal-modal-frame{max-height:min(92dvh,900px);overflow:auto;-webkit-overflow-scrolling:touch}
+.cal-close{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border:0;border-radius:999px;
+  background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  box-shadow:inset 0 0 0 1px var(--hair);color:var(--dim);font-size:14px;line-height:1;cursor:pointer;
+  transition:color var(--t-hover) var(--out),background-color var(--t-hover) var(--out)}
+.cal-close:hover{color:var(--fg);background:color-mix(in srgb,var(--fg) 12%,transparent)}
+@media (prefers-reduced-motion:reduce){.cal-modal[open],.cal-modal[open]::backdrop{animation:none}}
+
 /* booking calendar: the widget reports its own height, the shell script applies it */
 .cal{min-height:780px}
 .cal iframe{display:block}

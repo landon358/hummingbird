@@ -442,6 +442,25 @@
     addEventListener('webkitfullscreenchange', syncFull);
   });
 
+  /* the calendar opens over the page as a dialog: no window.open, so no popup blocker
+     is involved. The frame loads on the first open and keeps its place after that. */
+  const calModal = document.getElementById('calModal');
+  if (calModal) {
+    const frame = calModal.querySelector('iframe[data-src]');
+    const open = () => {
+      if (frame && !frame.src) frame.src = frame.dataset.src;
+      if (calModal.showModal) { calModal.showModal(); document.body.style.overflow = 'hidden'; }
+      else location.href = '/hummingbird/booking/';        // very old browser: the calendar has its own page
+    };
+    const shut = () => calModal.close();
+    document.querySelectorAll('[data-cal-open]').forEach(b => b.addEventListener('click', open));
+    calModal.addEventListener('click', e => {  // the backdrop is the dialog itself, outside the panel
+      if (e.target.closest('[data-cal-close]')) return shut();
+      if (!e.target.closest('.cal-modal-panel')) shut();
+    });
+    calModal.addEventListener('close', () => { document.body.style.overflow = ''; });
+  }
+
   /* the booking widget reports its height by postMessage. Its own resizer looks for a
      wrapper id this embed does not have, so we read the height off the message instead.
      Origin checked, so only the calendar host can resize its frame. */
