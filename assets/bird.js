@@ -240,7 +240,7 @@ hexToVec('#e1e6db', asciiMat.uniforms.uBase.value);
 const mouse = new THREE.Vector2(.5, .5), lastMouse = new THREE.Vector2(.5, .5), look = new THREE.Vector2();
 let vel = 0;
 addEventListener('pointermove', e => { mouse.set(e.clientX / innerWidth, 1 - e.clientY / innerHeight); });
-const INTERACTIVE = 'a, button, input, select, textarea, label, .menu';
+const INTERACTIVE = 'a, button, input, select, textarea, label, .menu, [data-chat-widget], #chat-widget, iframe';
 
 // click on the bird to send a shimmer ripple across it
 let ripIdx = 0;

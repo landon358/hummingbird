@@ -18,7 +18,7 @@
 <link rel="icon" href="/hummingbird/assets/icon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="/hummingbird/assets/icon-180.png">
 <meta name="theme-color" content="#09090b">
-<link rel="stylesheet" href="/hummingbird/assets/site.css?v=e88c4b55">
+<link rel="stylesheet" href="/hummingbird/assets/site.css?v=5941859c">
 </head>
 <body class="">
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -472,7 +472,7 @@
   addEventListener('wheel', e => {
     if (!fine.matches || calm.matches || e.ctrlKey || document.body.classList.contains('menu-open')) return;
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-    if (e.target.closest?.('textarea,select')) return;
+    if (e.target.closest?.('textarea,select,[data-chat-widget],#chat-widget,.lc_text-widget')) return;
     e.preventDefault();
     const unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1;
     if (!raf) { target = cur = scrollY; lastT = performance.now(); raf = requestAnimationFrame(tick); }
@@ -486,6 +486,9 @@
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
-<script type="module" src="/hummingbird/assets/bird.js?v=e88c4b55"></script>
+<script type="module" src="/hummingbird/assets/bird.js?v=5941859c"></script>
+<!-- GoHighLevel chat widget: loads after the page, renders its own bubble bottom right -->
+<div data-chat-widget data-widget-id="6ab02bc0360c1f2797ed519d" data-location-id="AzjOfJAzwzTBMCXCFZdF"></div>
+<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="6ab02bc0360c1f2797ed519d" defer></script>
 </body>
 </html>
