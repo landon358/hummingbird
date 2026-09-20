@@ -430,7 +430,7 @@ main,footer{transition:opacity .6s var(--ease)}
 
 /* the calendar over the page: a dialog, so escape and the focus trap come for free */
 .cal-modal{position:fixed;inset:auto;left:50%;top:50%;translate:-50% -50%;margin:0;   /* centred outright, not left to the dialog default */
-  width:min(560px,calc(100vw - 2 * var(--s4)));max-height:min(92dvh,900px);
+  width:min(600px,calc(100vw - 2 * var(--s4)));max-height:calc(100dvh - 2 * var(--s4));
   padding:0;border:0;background:none;overflow:visible;color:var(--fg)}
 .cal-modal::backdrop{background:color-mix(in srgb,#000 72%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .cal-modal[open]{animation:calIn 320ms var(--out) both}
@@ -439,7 +439,7 @@ main,footer{transition:opacity .6s var(--ease)}
 @keyframes calVeil{from{opacity:0}}
 .cal-modal-panel{position:relative;border-radius:26px;overflow:hidden;background:var(--bg);
   box-shadow:inset 0 0 0 1px var(--hair),0 40px 90px -30px rgba(0,0,0,.9)}
-.cal-modal-frame{max-height:min(92dvh,900px);overflow:auto;-webkit-overflow-scrolling:touch}
+.cal-modal-frame{max-height:calc(100dvh - 2 * var(--s4));overflow:auto;-webkit-overflow-scrolling:touch}
 .cal-close{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border:0;border-radius:999px;
   background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   box-shadow:inset 0 0 0 1px var(--hair);color:var(--dim);font-size:14px;line-height:1;cursor:pointer;

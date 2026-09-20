@@ -18,7 +18,7 @@
 <link rel="icon" href="/hummingbird/assets/icon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="/hummingbird/assets/icon-180.png">
 <meta name="theme-color" content="#09090b">
-<link rel="stylesheet" href="/hummingbird/assets/site.css?v=83af2f2a">
+<link rel="stylesheet" href="/hummingbird/assets/site.css?v=c5fb3889">
 </head>
 <body class="">
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -469,8 +469,14 @@
   const calModal = document.getElementById('calModal');
   if (calModal) {
     const frame = calModal.querySelector('iframe[data-src]');
+    // the widget reports a 560px height and crams its form into it, which is where the
+    // scrolling came from. Give it the room the screen actually has instead.
+    const room = () => Math.max(420, Math.min(940, innerHeight - 64));
+    const fit = () => { if (frame) frame.style.height = room() + 'px'; };
+    addEventListener('resize', () => { if (calModal.open) fit(); });
     const open = () => {
       if (frame && !frame.src) frame.src = frame.dataset.src;
+      fit();
       try { calModal.showModal(); } catch (e) {}
       if (!calModal.open) { location.href = '/hummingbird/booking/'; return; }   // no dialog support: the calendar has its own page
       document.body.style.overflow = 'hidden';
@@ -504,7 +510,7 @@
         else if (val && typeof val === 'object') dig(val, depth + 1);
       }
     })(d, 0);
-    if (h >= 200 && h <= 6000) cal.style.height = h + 'px';
+    if (h >= 200 && h <= 6000) cal.style.height = Math.max(h, parseInt(cal.style.height, 10) || 0) + 'px';
   });
 
   /* smooth wheel: the page eases toward where the wheel sends it instead of stepping in notches.
@@ -536,6 +542,6 @@
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
-<script type="module" src="/hummingbird/assets/bird.js?v=83af2f2a"></script>
+<script type="module" src="/hummingbird/assets/bird.js?v=c5fb3889"></script>
 </body>
 </html>
