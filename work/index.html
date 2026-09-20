@@ -18,7 +18,7 @@
 <link rel="icon" href="/hummingbird/assets/icon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="/hummingbird/assets/icon-180.png">
 <meta name="theme-color" content="#09090b">
-<link rel="stylesheet" href="/hummingbird/assets/site.css?v=c5fb3889">
+<link rel="stylesheet" href="/hummingbird/assets/site.css?v=f9c8c018">
 </head>
 <body class="">
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -417,13 +417,24 @@
 
   /* the calendar opens over the page as a dialog: no window.open, so no popup blocker
      is involved. The frame loads on the first open and keeps its place after that. */
+  let calNeed = 1020, fit = null;   // shared with the height listener below
   const calModal = document.getElementById('calModal');
   if (calModal) {
     const frame = calModal.querySelector('iframe[data-src]');
     // the widget reports a 560px height and crams its form into it, which is where the
-    // scrolling came from. Give it the room the screen actually has instead.
-    const room = () => Math.max(420, Math.min(940, innerHeight - 64));
-    const fit = () => { if (frame) frame.style.height = room() + 'px'; };
+    // scrolling came from. Lay it out at the height its tallest step needs, then scale the
+    // whole frame down to whatever the screen has, so nothing ever has to be scrolled.
+    const shell = calModal.querySelector('.cal-modal-frame');
+    calNeed = 1020;                                     // tallest step seen: details, with both consent blocks
+    fit = () => {
+      if (!frame) return;
+      const avail = innerHeight - 24, k = Math.min(1, avail / calNeed);
+      frame.style.height = calNeed + 'px';
+      frame.style.width = (100 / k) + '%';
+      frame.style.transformOrigin = 'top left';
+      frame.style.transform = 'scale(' + k + ')';
+      shell.style.height = Math.round(calNeed * k) + 'px';
+    };
     addEventListener('resize', () => { if (calModal.open) fit(); });
     const open = () => {
       if (frame && !frame.src) frame.src = frame.dataset.src;
@@ -461,7 +472,12 @@
         else if (val && typeof val === 'object') dig(val, depth + 1);
       }
     })(d, 0);
-    if (h >= 200 && h <= 6000) cal.style.height = Math.max(h, parseInt(cal.style.height, 10) || 0) + 'px';
+    if (h < 200 || h > 6000) return;
+    if (fit && cal.closest('.cal-modal')) {            // in the overlay: grow the layout height, then refit
+      if (h > calNeed) { calNeed = h; fit(); }
+      return;
+    }
+    cal.style.height = h + 'px';
   });
 
   /* smooth wheel: the page eases toward where the wheel sends it instead of stepping in notches.
@@ -493,6 +509,6 @@
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
-<script type="module" src="/hummingbird/assets/bird.js?v=c5fb3889"></script>
+<script type="module" src="/hummingbird/assets/bird.js?v=f9c8c018"></script>
 </body>
 </html>

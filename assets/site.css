@@ -33,13 +33,17 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;
 body::before{content:"";position:fixed;inset:0;z-index:2;pointer-events:none;
   background:radial-gradient(120% 90% at 50% 50%,transparent 55%,color-mix(in srgb,var(--bg) 70%,transparent) 100%)}
 /* film grain, plus a microscopic red, green and blue dot lattice so the black has some life in it */
-body::after{content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.1;
+/* the dot lattice sits on its own layer: mixed into the grain, the grey washed the colour out */
+html::after{content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.42;
   background-image:
-    radial-gradient(circle at 20% 22%,rgba(255,70,70,.62) 0 .5px,transparent .6px),
-    radial-gradient(circle at 62% 48%,rgba(70,255,150,.55) 0 .5px,transparent .6px),
-    radial-gradient(circle at 38% 78%,rgba(90,150,255,.62) 0 .5px,transparent .6px),
+    radial-gradient(circle at 22% 24%,rgba(255,45,45,1) 0 .9px,transparent 1.15px),
+    radial-gradient(circle at 64% 50%,rgba(40,255,140,.95) 0 .9px,transparent 1.15px),
+    radial-gradient(circle at 40% 78%,rgba(70,130,255,1) 0 .9px,transparent 1.15px);
+  background-size:5px 5px,5px 5px,5px 5px}
+body::after{content:"";position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.14;
+  background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:3px 3px,3px 3px,3px 3px,180px 180px}
+  background-size:180px 180px}
 main{position:relative;z-index:1}
 
 /* ---------- nav: detached islands ---------- */
@@ -430,7 +434,7 @@ main,footer{transition:opacity .6s var(--ease)}
 
 /* the calendar over the page: a dialog, so escape and the focus trap come for free */
 .cal-modal{position:fixed;inset:auto;left:50%;top:50%;translate:-50% -50%;margin:0;   /* centred outright, not left to the dialog default */
-  width:min(600px,calc(100vw - 2 * var(--s4)));max-height:calc(100dvh - 2 * var(--s4));
+  width:min(600px,calc(100vw - 2 * var(--s4)));
   padding:0;border:0;background:none;overflow:visible;color:var(--fg)}
 .cal-modal::backdrop{background:color-mix(in srgb,#000 72%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .cal-modal[open]{animation:calIn 320ms var(--out) both}
@@ -439,7 +443,7 @@ main,footer{transition:opacity .6s var(--ease)}
 @keyframes calVeil{from{opacity:0}}
 .cal-modal-panel{position:relative;border-radius:26px;overflow:hidden;background:var(--bg);
   box-shadow:inset 0 0 0 1px var(--hair),0 40px 90px -30px rgba(0,0,0,.9)}
-.cal-modal-frame{max-height:calc(100dvh - 2 * var(--s4));overflow:auto;-webkit-overflow-scrolling:touch}
+.cal-modal-frame{overflow:hidden}   /* the frame is scaled to fit, so there is nothing to scroll */
 .cal-close{position:absolute;top:10px;right:10px;z-index:2;width:34px;height:34px;border:0;border-radius:999px;
   background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   box-shadow:inset 0 0 0 1px var(--hair);color:var(--dim);font-size:14px;line-height:1;cursor:pointer;
