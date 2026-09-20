@@ -363,6 +363,10 @@ main,footer{transition:opacity .6s var(--ease)}
 .task-price .mono{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 /* the film takes what is left of the first screen once the heading and button have theirs */
 .vsl-wrap{margin-top:clamp(20px,3vh,34px);max-width:min(100%,calc(56dvh * 16 / 9));margin-inline:auto}
+/* the info page is one screen and nothing else: no button under the film, so it can sit higher */
+.hero--info{padding-block:clamp(88px,11vh,120px) clamp(32px,5vh,56px)}
+.hero--info .vsl-wrap{max-width:min(100%,calc(50dvh * 16 / 9))}
+
 .btn--wide{width:100%;justify-content:center;margin-top:clamp(18px,2.4vh,28px);padding-block:19px;font-size:clamp(16px,1.5vw,19px)}
 .task-note{margin-top:var(--s4);color:var(--faint);font-size:14px;line-height:1.7;max-width:62ch}
 .quiet-bird canvas#gl{opacity:.34}
