@@ -18,7 +18,7 @@
 <link rel="icon" href="/hummingbird/assets/icon-64.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="/hummingbird/assets/icon-180.png">
 <meta name="theme-color" content="#09090b">
-<link rel="stylesheet" href="/hummingbird/assets/site.css">
+<link rel="stylesheet" href="/hummingbird/assets/site.css?v=83af2f2a">
 </head>
 <body class="">
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -449,11 +449,13 @@
     const frame = calModal.querySelector('iframe[data-src]');
     const open = () => {
       if (frame && !frame.src) frame.src = frame.dataset.src;
-      if (calModal.showModal) { calModal.showModal(); document.body.style.overflow = 'hidden'; }
-      else location.href = '/hummingbird/booking/';        // very old browser: the calendar has its own page
+      try { calModal.showModal(); } catch (e) {}
+      if (!calModal.open) { location.href = '/hummingbird/booking/'; return; }   // no dialog support: the calendar has its own page
+      document.body.style.overflow = 'hidden';
     };
-    const shut = () => calModal.close();
-    document.querySelectorAll('[data-cal-open]').forEach(b => b.addEventListener('click', open));
+    const shut = () => { try { calModal.close(); } catch (e) {} document.body.style.overflow = ''; };
+    // delegated, so it still works if a button is re-rendered or added later
+    document.addEventListener('click', e => { if (e.target.closest('[data-cal-open]')) { e.preventDefault(); open(); } });
     calModal.addEventListener('click', e => {  // the backdrop is the dialog itself, outside the panel
       if (e.target.closest('[data-cal-close]')) return shut();
       if (!e.target.closest('.cal-modal-panel')) shut();
@@ -512,6 +514,6 @@
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
 </script>
-<script type="module" src="/hummingbird/assets/bird.js"></script>
+<script type="module" src="/hummingbird/assets/bird.js?v=83af2f2a"></script>
 </body>
 </html>
