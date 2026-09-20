@@ -18,7 +18,8 @@ let mode = store.get('hb_transit') === '1' && navType === 'navigate' ? 'enter' :
 store.del('hb_transit');
 const enterAngle = parseFloat(store.get('hb_dir') || '0') || 0;   // direction the bird left the previous page, radians
 if (mode !== 'enter') document.documentElement.classList.remove('transit');
-const params = { cell: 7, flap: 54, shim: 2, idle: 0, raw: false, glyphs: ' * _<>,  ./O#SF +' };
+const SLOW = .55;   // one dial for how calm the bird is: 1 is the old speed, lower is slower
+const params = { cell: 7, flap: 20, shim: 2, idle: 0, raw: false, glyphs: ' * _<>,  ./O#SF +' };
 
 /* ---------- scene pass: bird rendered to a texture ---------- */
 const scene = new THREE.Scene();
@@ -598,6 +599,7 @@ const FEATHERS = [['L2', -2], ['L1', -1], ['C', 0], ['R1', 1], ['R2', 2]];
 
 function loop(now, manual) {
   const dt = THREE.MathUtils.clamp((now - last) / 1000, 0, 1 / 20); last = now; time += dt;
+  const mt = time * SLOW;   // pose clock: hovering, bobbing, tail and head all move at this rate
 
   const mv = mouse.distanceTo(lastMouse); lastMouse.copy(mouse);
   vel += (Math.min(mv * 30, 1) - vel) * .18;
@@ -652,8 +654,8 @@ function loop(now, manual) {
   const h = headingAt(scrollP);
   const e = .25 / Math.max(1, KEY_S.length - 1), kappa = wrapA(headingAt(scrollP + e).yaw - headingAt(scrollP - e).yaw) / (2 * e) * (e / .012);
 
-  const dart = Math.sin(time * .9) * .05 + Math.sin(time * 2.1 + 1.3) * .03 + Math.sin(time * .37) * .06;
-  const dartV = Math.cos(time * .9) * .045 + Math.cos(time * 2.1 + 1.3) * .063 + Math.cos(time * .37) * .022;
+  const dart = Math.sin(mt * .9) * .05 + Math.sin(mt * 2.1 + 1.3) * .03 + Math.sin(mt * .37) * .06;
+  const dartV = (Math.cos(mt * .9) * .045 + Math.cos(mt * 2.1 + 1.3) * .063 + Math.cos(mt * .37) * .022) * SLOW;
 
   let yawGoal = h.yaw + off;
   let pitchBase = h.pitch * .7 * fwd + Math.abs(turnPulse) * .25;
@@ -664,7 +666,7 @@ function loop(now, manual) {
   if (mode === 'logo') {
     idle = 1; hardLock = true;
     slotWorld(chase);
-    yawGoal = -.35 + Math.sin(time * .8) * .25; pitchBase = .05; bankPath = 0;
+    yawGoal = -.35 + Math.sin(mt * .8) * .25; pitchBase = .05; bankPath = 0;
     scaleGoal = logoScale();
   } else if (mode === 'launch') {
     idle = 0; hardLock = true;
@@ -724,7 +726,7 @@ function loop(now, manual) {
   // heading, bank and pitch all ride critically damped springs: a turn eases in and eases out,
   // and a sudden change of goal bends the motion instead of kinking it
   const quick = mode === 'launch' || mode === 'enter';
-  const yawW = quick ? 13 : 5.2, yawMax = quick ? 14 : 4.2;
+  const yawW = quick ? 13 : 5.2 * SLOW + 1.6, yawMax = quick ? 14 : 4.2 * SLOW + .8;
   yawV += (yawW * yawW * wrapA(yawGoal - yawS) - 2 * yawW * yawV) * dt;
   yawV = THREE.MathUtils.clamp(yawV, -yawMax, yawMax);
   yawS += yawV * dt;
@@ -739,7 +741,7 @@ function loop(now, manual) {
   look.x += ((mouse.x - .5) - look.x) * Math.min(1, dt * 2.5);
   look.y += ((mouse.y - .5) - look.y) * Math.min(1, dt * 2.5);
 
-  const bob = Math.sin(time * 2.3) * .025;
+  const bob = Math.sin(mt * 2.3) * .025;
   if (onTrack) {
     if (turnT < 1) {
       const sp = .95 * (1 - turnT * .6);
@@ -787,9 +789,9 @@ function loop(now, manual) {
     // damped spring with a top speed, so anchor jumps become flight instead of teleports
     for (let s = 0; s < 2; s++) {
       const h2 = dt / 2;
-      _acc.copy(chase).sub(dispPos).multiplyScalar(40).addScaledVector(dispVel, -12.6);
+      _acc.copy(chase).sub(dispPos).multiplyScalar(30).addScaledVector(dispVel, -11);
       dispVel.addScaledVector(_acc, h2);
-      const vmax = 2.8; if (dispVel.length() > vmax) dispVel.setLength(vmax);
+      const vmax = 2.2; if (dispVel.length() > vmax) dispVel.setLength(vmax);
       dispPos.addScaledVector(dispVel, h2);
     }
   }
@@ -803,7 +805,7 @@ function loop(now, manual) {
   if (wantCell !== cellOverride) { cellOverride = wantCell; buildAtlas(); }
 
   const yaw = yawS + dartV * 1.2 * idleS * live + bank * .15;
-  const pitch = THREE.MathUtils.lerp(pitchS + Math.sin(time * 2.3 + 1) * .03 - cres * .12, FOLD.pitch, perchK);
+  const pitch = THREE.MathUtils.lerp(pitchS + Math.sin(mt * 2.3 + 1) * .03 - cres * .12, FOLD.pitch, perchK);
   setRot(rig.Body, (bank + rollExtra) * (1 - perchK), yaw, pitch, 'YZX');
 
   if (rig.Neck) {
@@ -822,13 +824,13 @@ function loop(now, manual) {
   }
 
   turnS += (THREE.MathUtils.clamp(fwd * kappa * .04 + turnPulse * .7 + dartV * 3. * idleS * live, -1.2, 1.2) - turnS) * Math.min(1, dt * 3);
-  const w = time * 3.1;
-  headSnap += ((Math.round(Math.sin(time * .55) * 1.5 + Math.sin(time * 1.3) * .6) * .18) * (1 - idleS) - headSnap) * Math.min(1, dt * 9);
+  const w = mt * 3.1;
+  headSnap += ((Math.round(Math.sin(mt * .55) * 1.5 + Math.sin(mt * 1.3) * .6) * .18) * (1 - idleS) - headSnap) * Math.min(1, dt * 9);
   // sitting, the hovering body undulation stops; only the head keeps looking around
   setRot(rig.Hips, Math.sin(w + 1.2) * .05 * live, -turnS * .35 + Math.sin(w * .6) * .06 * live, Math.sin(w) * .09 * live - pitch * .3 - cres * .55, 'YZX');
   setRot(rig.Chest, Math.sin(w * .6 + .5) * .04 * live, turnS * .2 + Math.sin(w * .6 + .9) * .05 * live, Math.sin(w + .9) * .06 * live + cres * .3, 'YZX');
   setRot(rig.Neck, 0, turnS * .25 + headYaw * .4, Math.sin(w + 1.8) * .07 * live + cres * .3 + headPitch * .35, 'YZX');
-  setRot(rig.Head, Math.sin(time * 1.7) * .14 * (1 - idleS * .6) * live - bank * .3, turnS * .25 + headSnap + headYaw * .6, Math.sin(w + 2.7) * -.05 + cres * .25 + headPitch * .65, 'YZX');
+  setRot(rig.Head, Math.sin(mt * 1.7) * .14 * (1 - idleS * .6) * live - bank * .3, turnS * .25 + headSnap + headYaw * .6, Math.sin(w + 2.7) * -.05 + cres * .25 + headPitch * .65, 'YZX');
 
   // perched, the wings wind down and close against the body rather than cutting out mid beat
   phase += dt * THREE.MathUtils.lerp(params.flap, 4, perchK);
@@ -841,10 +843,10 @@ function loop(now, manual) {
   if (rig.WingR) rig.WingR.scale.setScalar(ws);
   if (rig.WingL) rig.WingL.scale.setScalar(ws);
 
-  const lift = Math.sin(time * 2.3 + 1.4) * .07 * live - pitch * .5 - cres * .45 + perchK * FOLD.tail;
+  const lift = Math.sin(mt * 2.3 + 1.4) * .07 * live - pitch * .5 - cres * .45 + perchK * FOLD.tail;
   setRot(rig.Tail, 0, -bank * .5, lift);
-  const fan = .04 + Math.sin(time * 1.4) * .035 + cres * .25 + (onTrack ? scrollP * .2 : 0);
-  const curl = .08 + Math.sin(time * 2.3 + 2.2) * .08 + lift * .6;
+  const fan = .04 + Math.sin(mt * 1.4) * .035 + cres * .25 + (onTrack ? scrollP * .2 : 0);
+  const curl = .08 + Math.sin(mt * 2.3 + 2.2) * .08 + lift * .6;
   for (const [id, s] of FEATHERS) {
     setRot(rig['Tail_' + id], 0, s * fan * .5 + bank * .1, 0);
     setRot(rig['Tail_' + id + '_Tip'], 0, s * fan * .25, curl);
@@ -885,7 +887,7 @@ if (new URLSearchParams(location.search).has('debug')) window.__bird = {
     return r.map(Math.round); },
   get scale() { return flightScale; },
 
-  rig, fold: FOLD,
+  rig, fold: FOLD, slow: SLOW, params,
   get pose() { return { yaw: yawS, bank, idle: idleS, off, dir, turnT }; },
   get perch() { return { on: perched, k: +perchK.toFixed(3), page: Math.round(perchPage), base: Math.round(perchBase), anchor: perchAnchor, x: +perchX.toFixed(2) }; },
   get beams() { const u = asciiMat.uniforms; return BEAMS.map((b, i) => ({ c: +u.uBeamC.value[i].toFixed(3), h: +u.uBeamH.value[i].toFixed(3), dir: +u.uBeamDir.value[i].toFixed(2) })); },
