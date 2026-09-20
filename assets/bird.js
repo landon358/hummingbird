@@ -549,6 +549,7 @@ resize();
 
 /* ---------- load model ---------- */
 const rig = {};
+let wingTrimmed = [0, 0];
 const offset = new THREE.Group(); scene.add(offset);
 const _e = new THREE.Euler(), _q = new THREE.Quaternion();
 function setRot(node, x, y, z, order = 'XYZ') {
@@ -566,22 +567,26 @@ else fetch('/assets/hummingbird.glb').then(r => { if (!r.ok) throw new Error(r.s
     o.userData.q0 = o.quaternion.clone();
     if (o.name) rig[o.name] = o;
   });
-  // each wing mesh carries a lump of torso at its root, which swings out of the body on every
-  // beat. It lives inboard of the shoulder, so drop the triangles on that side of the cut.
-  const trimWing = (mesh, sign, cut = .02) => {
+  // each wing mesh carries a slab of torso at its root, which swings out of the body on every
+  // beat. How far a triangle swings is set by its distance from the wing pivot, so drop the
+  // inboard triangles beyond that radius and keep the ones near the axis: they barely move and
+  // they are what closes the seam against the shoulder.
+  const trimWing = (mesh, sign, cut = .02, keepR = .05) => {
     if (!mesh || !mesh.geometry) return 0;
     const g = mesh.geometry, pos = g.attributes.position, idx = g.index;
     const tri = idx ? idx.count / 3 : pos.count / 3, keep = [];
     for (let t = 0; t < tri; t++) {
       const i0 = idx ? idx.getX(t * 3) : t * 3, i1 = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, i2 = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
-      const z = (pos.getZ(i0) + pos.getZ(i1) + pos.getZ(i2)) / 3 * sign;
-      if (z >= cut) keep.push(i0, i1, i2);
+      const x = (pos.getX(i0) + pos.getX(i1) + pos.getX(i2)) / 3,
+            y = (pos.getY(i0) + pos.getY(i1) + pos.getY(i2)) / 3,
+            z = (pos.getZ(i0) + pos.getZ(i1) + pos.getZ(i2)) / 3 * sign;
+      if (z >= cut || Math.hypot(x, y) <= keepR) keep.push(i0, i1, i2);
     }
     const dropped = tri - keep.length / 3;
     g.setIndex(keep); g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();
     return dropped;
   };
-  const trimmed = [trimWing(rig.WingR, 1), trimWing(rig.WingL, -1)];
+  wingTrimmed = [trimWing(rig.WingR, 1), trimWing(rig.WingL, -1)];
 
   offset.add(gltf.scene);
   const size = new THREE.Box3().setFromObject(gltf.scene).getSize(new THREE.Vector3());
@@ -904,7 +909,7 @@ if (new URLSearchParams(location.search).has('debug')) window.__bird = {
     return r.map(Math.round); },
   get scale() { return flightScale; },
 
-  rig, fold: FOLD, slow: SLOW, params,
+  rig, fold: FOLD, slow: SLOW, params, get trimmed() { return wingTrimmed; },
   get wingTrim() { return { WingR: rig.WingR?.geometry.index.count / 3, WingL: rig.WingL?.geometry.index.count / 3 }; },
   get pose() { return { yaw: yawS, bank, idle: idleS, off, dir, turnT }; },
   get perch() { return { on: perched, k: +perchK.toFixed(3), page: Math.round(perchPage), base: Math.round(perchBase), anchor: perchAnchor, x: +perchX.toFixed(2) }; },
