@@ -298,9 +298,12 @@ function splitText(el) {
   if (named) for (const child of el.children) child.setAttribute('aria-hidden', 'true');
 }
 for (const ch of document.querySelectorAll('.split .ch')) CHARS.push({ el: ch, o: ch.textContent, on: false, fixed: false, x: 0, y: 0, seed: Math.random() });
+// the legal pages are read by compliance scanners, and a per letter split turns their text into
+// gibberish for anything that pulls text out of the rendered html. Leave that copy whole.
 const SPLIT = [...document.querySelectorAll(
   '#content :is(h1,h2,h3,p,li,blockquote,summary,.btn,.price,.ledger-lead,.who,.meta,.cover span,.field span),' +
-  'footer span,footer a,.brand .word,.island a,.menu a span,.menu small')];
+  'footer span,footer a,.brand .word,.island a,.menu a span,.menu small')]
+  .filter(el => !el.closest('.doc'));
 SPLIT.forEach(el => { if (!SPLIT.some(o => o !== el && o.contains(el))) splitText(el); });
 function measureChars() {
   for (const c of CHARS) { const r = c.el.getBoundingClientRect(); c.x = r.left + r.width / 2; c.y = r.top + r.height / 2 + (c.fixed ? 0 : scrollY); }

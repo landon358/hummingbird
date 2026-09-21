@@ -212,6 +212,9 @@ footer{position:relative;z-index:1;margin-top:var(--s8);padding:var(--s8) clamp(
   .foot-base .sep{margin-left:0}
 }
 
+/* long form legal copy: one readable column, quiet subheads.
+   It never animates in: a scanner that renders the page but never scrolls has to be able to read it. */
+.js .doc.rv,.js .doc .rv{opacity:1;transform:none;filter:none;transition:none}
 /* long form legal copy: one readable column, quiet subheads */
 .doc{max-width:70ch}
 .doc h2{font:500 clamp(19px,1.7vw,23px)/1.25 var(--display);letter-spacing:-.025em;margin-top:var(--s7)}
